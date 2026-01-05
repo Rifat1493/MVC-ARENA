@@ -1,7 +1,11 @@
 import { isAttack } from '@/classes/card/cardData'
 
 // Function to create a unique object id
-const uuidV1 = require('uuid/v1')
+// const uuidV1 = require('uuid/v1')
+
+import { v1 as uuidV1 } from 'uuid';
+
+// const uuidV1 = uuidv1();
 
 /**
  * A Base Class representing a game Card.

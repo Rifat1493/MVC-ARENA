@@ -1,5 +1,9 @@
 // Function to create a unique object id
-const uuidV1 = require('uuid/v1')
+// const uuidV1 = require('uuid/v1')
+
+import { v1 as uuidV1 } from 'uuid';
+
+// const uuidV1 = uuidv1();
 
 /**
  * Class for status effects that can be applied to a player.

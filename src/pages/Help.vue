@@ -42,6 +42,12 @@ import helpIntro from 'raw-loader!@/markdown/helpIntro.md'
 import howToPlay from 'raw-loader!@/markdown/howToPlay.md'
 import gameplay from  'raw-loader!@/markdown/gameplay.md'
 
+// import helpIntro from '@/markdown/helpIntro.md?raw'
+// import howToPlay from '@/markdown/howToPlay.md?raw'
+// import gameplay from  '@/markdown/gameplay.md?raw'
+
+
+
 export default {
   name: 'HelpPage',
   components: {
