@@ -14,11 +14,8 @@
  * @module router
  */
 
-import Vue from 'vue'
-import VueRouter from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '@/pages/Home.vue'
-
-Vue.use(VueRouter)
 
 /**
  * List of router paths.
@@ -56,7 +53,7 @@ const routes = [
     component: () => import('@/pages/Help.vue')
   },
   {
-    path: '*',
+    path: '/:pathMatch(.*)*',
     redirect: '/'
   }
 ]
@@ -66,9 +63,8 @@ const routes = [
  *
  * Can be imported with `import router from '@/router`
  */
-const router = new VueRouter({
-  mode: 'history',
-  base: process.env.BASE_URL,
+const router = createRouter({
+  history: createWebHistory(process.env.BASE_URL),
   routes
 })
 

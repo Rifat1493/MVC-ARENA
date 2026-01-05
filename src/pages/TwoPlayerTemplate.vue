@@ -1,52 +1,84 @@
 <template>
-<div id="two-player-game" v-if="inGame">
-  <slot name="modals">
-    <winner-modal id="winner-modal" class="modal"
-      data-backdrop='static' data-keyboard='false'/>
-  </slot>
-
-  <slot name="page-header">
-    <page-header>
-        <template v-slot:pageHeading> Score Limit: {{ game.scoreLimit }} </template>
-    </page-header>
-  </slot>
-
-  <div class="player" style="left: 0;">
-    <slot name="player-1">
-      <player-area :player="game.getPlayer(0)" side="left"/>
+  <div
+    v-if="inGame"
+    id="two-player-game"
+  >
+    <slot name="modals">
+      <winner-modal
+        id="winner-modal"
+        class="modal"
+        data-backdrop="static"
+        data-keyboard="false"
+      />
     </slot>
-  </div>
 
-  <div class="stacks-area" style="left: 0.5%">
-    <slot name="p1-stack-area">
-      <stack-area :player="game.getPlayer(0)" tabSide="right"/>
+    <slot name="page-header">
+      <page-header>
+        <template #pageHeading>
+          Score Limit: {{ game.scoreLimit }}
+        </template>
+      </page-header>
     </slot>
+
+    <div
+      class="player"
+      style="left: 0;"
+    >
+      <slot name="player-1">
+        <player-area
+          :player="game.getPlayer(0)"
+          side="left"
+        />
+      </slot>
+    </div>
+
+    <div
+      class="stacks-area"
+      style="left: 0.5%"
+    >
+      <slot name="p1-stack-area">
+        <stack-area
+          :player="game.getPlayer(0)"
+          tab-side="right"
+        />
+      </slot>
+    </div>
+
+    <div class="hand-area">
+      <slot name="hand-area">
+        <hand-area />
+      </slot>
+    </div>
+
+    <div
+      class="player"
+      style="right: 0;"
+    >
+      <slot name="player-2">
+        <player-area
+          :player="game.getPlayer(1)"
+          side="right"
+        />
+      </slot>
+    </div>
+
+    <div
+      class="stacks-area"
+      style="right: 0.5%;"
+    >
+      <slot name="p2-stack-area">
+        <stack-area
+          :player="game.getPlayer(1)"
+          tab-side="left"
+        />
+      </slot>
+    </div>
+
+    <effect-notifications />
   </div>
-
-  <div class="hand-area">
-    <slot name="hand-area">
-      <hand-area/>
-    </slot>
+  <div v-else>
+    <error-page />
   </div>
-
-  <div class="player" style="right: 0;">
-    <slot name="player-2">
-      <player-area :player="game.getPlayer(1)" side="right"/>
-    </slot>
-  </div>
-
-  <div class="stacks-area" style="right: 0.5%;">
-    <slot name="p2-stack-area">
-      <stack-area :player="game.getPlayer(1)" tabSide="left"/>
-    </slot>
-  </div>
-
-  <effect-notifications/>
-
-</div>
-<div v-else>
-  <error-page/>
-</div>
 </template>
 
 <script>
@@ -78,7 +110,7 @@ import { mapActions, mapGetters } from 'vuex'
  * - `p2-stack-area` - Holds the stack area for the right player.
  */
 export default {
-  name: 'beginner-game',
+  name: 'BeginnerGame',
   components: {
     'winner-modal': WinnerModal,
     'page-header': PageHeader,
@@ -102,15 +134,15 @@ export default {
   },
   created () {
     // Add a 'game-over' listener to show the winner modal
-    bus.$on('game-over', this.showWinner)
+    bus.on('game-over', this.showWinner)
     // Ensures we are always in a game mode when on this page
     if (!this.inGame) {
       this.leaveGame()
     }
   },
-  beforeDestroy () {
+  beforeUnmount () {
     // Remove the listener when the component is destroyed
-    bus.$off('game-over', this.showWinner)
+    bus.off('game-over', this.showWinner)
   }
 }
 </script>

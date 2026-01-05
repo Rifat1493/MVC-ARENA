@@ -1,33 +1,65 @@
 <template>
-<div id="add-players">
+  <div id="add-players">
+    <h4 class="sub-heading">
+      Players
+    </h4>
+    <p style="color: red;">
+      {{ howManyPlayers }}
+    </p>
 
-  <h4 class="sub-heading"> Players </h4>
-  <p style="color: red;"> {{ howManyPlayers }} </p>
+    <input
+      id="enter-name"
+      type="text"
+      :placeholder="inputPlaceholder"
+      maxlength="10"
+      :disabled="home.atPlayerLimit()"
+      autofocus
+      @keyup.enter="addPlayer"
+    >
 
-  <input id="enter-name" type="text" :placeholder="inputPlaceholder" maxlength="10"
-    v-on:keyup.enter="addPlayer" :disabled="home.atPlayerLimit()" autofocus>
+    <button
+      type="button"
+      class="btn btn-info btn-sm"
+      :disabled="home.atPlayerLimit()"
+      @click="addPlayer()"
+    >
+      Add Human
+    </button>
 
-  <button type="button" class="btn btn-info btn-sm" v-on:click="addPlayer()"
-    :disabled="home.atPlayerLimit()"> Add Human </button>
+    <button
+      type="button"
+      class="btn btn-danger btn-sm"
+      :disabled="!canAddBot"
+      @click="addBot()"
+    >
+      Add Bot
+    </button>
 
-  <button type="button" class="btn btn-danger btn-sm" v-on:click="addBot()"
-    :disabled="!canAddBot"> Add Bot </button>
+    <div class="section">
+      <ol id="player-list">
+        <li
+          v-for="player in home.players"
+          :key="player.name"
+        >
+          {{ player.name }}
 
-  <div class='section'>
-    <ol id="player-list">
-      <li v-for="player in home.players" v-bind:key="player.name">
-        {{ player.name }}
+          <div
+            v-if="player.isAI"
+            class="tag"
+          >
+            (BOT)
+          </div>
 
-        <div class="tag" v-if="player.isAI"> (BOT) </div>
-
-        <a class="remove" v-on:click="removePlayer(player.name)">
-          <u>Remove</u>
-        </a>
-      </li>
-    </ol>
+          <a
+            class="remove"
+            @click="removePlayer(player.name)"
+          >
+            <u>Remove</u>
+          </a>
+        </li>
+      </ol>
+    </div>
   </div>
-
-</div>
 </template>
 
 <script>
@@ -53,7 +85,7 @@ import { mapGetters } from 'vuex'
  * @vue-computed {bool} canAddBot - True if an AI player can be added.
  */
 export default {
-  name: 'add-players',
+  name: 'AddPlayers',
   computed: {
     ...mapGetters(['home']),
     howManyPlayers () {
@@ -66,6 +98,14 @@ export default {
       // will need to be adjusted if more than 2 players are allowed
       return !this.home.atPlayerLimit() && !this.home.hasBot()
     }
+  },
+  created () {
+    // Add a listener to remove all AI players when mode is changed
+    bus.on('change-mode', this.removeBots)
+  },
+  beforeUnmount() {
+    // Remove listener when component is destroyed
+    bus.off('change-mode', this.removeBots)
   },
   methods: {
     /**
@@ -118,14 +158,6 @@ export default {
     removeBots () {
       this.home.removeBots
     }
-  },
-  created () {
-    // Add a listener to remove all AI players when mode is changed
-    bus.$on('change-mode', this.removeBots)
-  },
-  beforeDestroy() {
-    // Remove listener when component is destroyed
-    bus.$off('change-mode', this.removeBots)
   }
 }
 </script>

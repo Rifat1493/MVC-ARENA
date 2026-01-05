@@ -1,24 +1,34 @@
 <template>
-<div id='sort'>
-  <div class="backdrop">
+  <div id="sort">
+    <div class="backdrop">
+      <div class="popup">
+        <h3 style="margin-top: 2%;">
+          <b>Sort</b>
+        </h3>
 
-    <div class="popup">
-      <h3 style="margin-top: 2%;"> <b>Sort</b> </h3>
+        <div class="content">
+          <img
+            v-for="card in sortedCards"
+            :key="card.id"
+            :src="card.image"
+            class="card"
+            draggable
+            @dragstart="startDrag($event, card)"
+            @drop="onDrop($event, card)"
+            @dragover.prevent
+            @dragenter.prevent
+          >
+        </div>
 
-      <div class="content">
-        <img v-for="card in sortedCards" v-bind:key="card.id"
-          :src="card.image" class="card" draggable
-          v-on:dragstart="startDrag($event, card)"
-          @drop="onDrop($event, card)" @dragover.prevent @dragenter.prevent>
+        <button
+          class="btn btn-primary my-btn"
+          @click="finish"
+        >
+          Finish
+        </button>
       </div>
-
-      <button class="btn btn-primary my-btn" v-on:click="finish">
-        Finish
-      </button>
     </div>
-
   </div>
-</div>
 </template>
 
 <script>
@@ -36,7 +46,7 @@ import { mapGetters } from 'vuex'
  * @vue-prop {Deck} deck - The deck being sorted.
  */
 export default {
-  name: 'search',
+  name: 'Search',
   props: ['cardOwner', 'card', 'deck'],
   data () {
     return {

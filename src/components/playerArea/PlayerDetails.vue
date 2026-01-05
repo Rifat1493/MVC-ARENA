@@ -1,18 +1,23 @@
 <template>
-<div id="player-details">
+  <div id="player-details">
+    <div :class="[side, 'player-info']">
+      <h3 :class="[side, 'name']">
+        {{ player.name }}
+      </h3>
 
-  <div :class="[side, 'player-info']">
-    <h3 :class="[side, 'name']"> {{ player.name }} </h3>
+      <img
+        :class="['avatar', side, { active: isCurrentPlayer }]"
+        :src="player.image"
+      >
+    </div>
 
-    <img :class="['avatar', side, { active: isCurrentPlayer }]"
-        :src="player.image">
+    <div :class="[oppSide, 'player-access']">
+      <spy-accessor
+        v-if="showSpy"
+        :player="player"
+      />
+    </div>
   </div>
-
-  <div :class="[oppSide, 'player-access']">
-    <spy-accessor v-if="showSpy" :player="player"/>
-  </div>
-
-</div>
 </template>
 
 <script>
@@ -31,11 +36,11 @@ import { mapGetters } from 'vuex'
  * @vue-computed {bool} showSpy - True if a player should have a spy button shown.
  */
 export default {
-  name: 'player-details',
-  props: ['player', 'side'],
+  name: 'PlayerDetails',
   components: {
     'spy-accessor': SpyAccessor
   },
+  props: ['player', 'side'],
   computed: {
     ...mapGetters(['game']),
     isCurrentPlayer () {

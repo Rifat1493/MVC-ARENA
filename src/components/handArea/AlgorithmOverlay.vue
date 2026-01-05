@@ -1,21 +1,32 @@
 <template>
-<div id="algorithm-overlay">
-  <!-- CLicking play on a card that is not a mimic will set the card type so
+  <div id="algorithm-overlay">
+    <!-- CLicking play on a card that is not a mimic will set the card type so
        that isActive(type) will return true for that type. This will show the
        component to allow the player to play that card type. Adding new
        algorithm cards should include adding a new component here with
        v-if="isActive("newCardType"). -->
-  <search v-if="isActive('SEARCH')" :deck="game.getDeck()"
-    :card="card" :cardOwner="owner"/> 
-  <sort v-if="isActive('SORT')" :deck="game.getDeck()"
-    :card="card" :cardOwner="owner"/> 
+    <search
+      v-if="isActive('SEARCH')"
+      :deck="game.getDeck()"
+      :card="card"
+      :card-owner="owner"
+    /> 
+    <sort
+      v-if="isActive('SORT')"
+      :deck="game.getDeck()"
+      :card="card"
+      :card-owner="owner"
+    /> 
 
-  <h5> {{ titleText }} </h5>
-  <button v-if="canPlay" class="btn btn-sm btn-primary my-btn" v-on:click="play()">
-    Activate
-  </button>
-
-</div>
+    <h5> {{ titleText }} </h5>
+    <button
+      v-if="canPlay"
+      class="btn btn-sm btn-primary my-btn"
+      @click="play()"
+    >
+      Activate
+    </button>
+  </div>
 </template>
 
 
@@ -39,16 +50,16 @@ import { mapGetters } from 'vuex'
  * If the card can be played it is the card type, otherwise "Not Available".
  */
 export default {
-  name: 'algorithm-overlay',
+  name: 'AlgorithmOverlay',
+  components: {
+    'search': Search,
+    'sort': Sort
+  },
   props: ['card', 'owner'],
   data () {
     return {
       active: null
     }
-  },
-  components: {
-    'search': Search,
-    'sort': Sort
   },
   computed: {
     ...mapGetters(['game']),

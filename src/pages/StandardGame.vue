@@ -1,7 +1,7 @@
 <template>
-<div>
-  <two-player-template/>
-</div>
+  <div>
+    <two-player-template />
+  </div>
 </template>
 
 <script>
@@ -14,7 +14,7 @@ import TwoPlayerTemplate from '@/pages/TwoPlayerTemplate.vue'
  * for `standard` mode games.
  */
 export default {
-  name: 'standard-game',
+  name: 'StandardGame',
   components: {
     'two-player-template': TwoPlayerTemplate
   }

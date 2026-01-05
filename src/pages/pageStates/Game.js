@@ -214,11 +214,11 @@ class Game {
    */
   notifications (playInfo) {
     if (playInfo.scanned) {
-      bus.$emit('scan-used')
+      bus.emit('scan-used')
     } else if (playInfo.replaced) {
-      bus.$emit('mimic-played')
+      bus.emit('mimic-played')
     }
-    bus.$emit('card-played', playInfo)
+    bus.emit('card-played', playInfo)
   }
 
   /**
@@ -251,7 +251,7 @@ class Game {
    */
   endTurn () {
     this.wait = true
-    bus.$emit('end-turn')
+    bus.emit('end-turn')
 
     // timeout is asynchronus so both start their countdown at the same time
     setTimeout(() => {
@@ -276,7 +276,7 @@ class Game {
    */
   endGame () {
     if (this.isOver && this.playerNum === this.players.length - 1) {
-      bus.$emit('game-over')
+      bus.emit('game-over')
       return true
     }
     return false

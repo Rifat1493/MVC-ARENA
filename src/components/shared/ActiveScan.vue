@@ -1,36 +1,69 @@
 <template>
-<div id='active-scan'>
-  <div class="backdrop">
+  <div id="active-scan">
+    <div class="backdrop">
+      <div class="popup">
+        <h3 style="margin-top: 2%;">
+          <b>Active Scan</b>
+        </h3>
 
-    <div class="popup">
-      <h3 style="margin-top: 2%;"> <b>Active Scan</b> </h3>
-
-      <div class="content">
-        <div v-for="mimic in attacks.mimics" v-bind:key="mimic.id" class="attack">
-          <img class="card" :src="mimic.card.image">
-          <img class="icon" :src="trojanImage">
-          <button v-on:click="playScan(mimic, 'mimic')" class="btn btn-success clean">
-            Clean </button>
-        </div>
-
-        <div v-for="stack in attacks.virusStacks" v-bind:key="stack.id" class="attack">
-          <div class="card-stack">
-            <card-stack :stack="stack"/>
+        <div class="content">
+          <div
+            v-for="mimic in attacks.mimics"
+            :key="mimic.id"
+            class="attack"
+          >
+            <img
+              class="card"
+              :src="mimic.card.image"
+            >
+            <img
+              class="icon"
+              :src="trojanImage"
+            >
+            <button
+              class="btn btn-success clean"
+              @click="playScan(mimic, 'mimic')"
+            >
+              Clean
+            </button>
           </div>
-          <button v-on:click="playScan(stack, 'stack')" class="btn btn-success clean">
-            Clean </button>
-        </div>
 
-        <div v-for="effect in attacksEffects" v-bind:key="effect.id" class="attack">
-          <img class="card" :src="effect.image">
-          <button v-on:click="playScan(effect, 'effect')" class="btn btn-success clean">
-            Clean </button>
+          <div
+            v-for="stack in attacks.virusStacks"
+            :key="stack.id"
+            class="attack"
+          >
+            <div class="card-stack">
+              <card-stack :stack="stack" />
+            </div>
+            <button
+              class="btn btn-success clean"
+              @click="playScan(stack, 'stack')"
+            >
+              Clean
+            </button>
+          </div>
+
+          <div
+            v-for="effect in attacksEffects"
+            :key="effect.id"
+            class="attack"
+          >
+            <img
+              class="card"
+              :src="effect.image"
+            >
+            <button
+              class="btn btn-success clean"
+              @click="playScan(effect, 'effect')"
+            >
+              Clean
+            </button>
+          </div>
         </div>
       </div>
     </div>
-
   </div>
-</div>
 </template>
 
 
@@ -53,11 +86,11 @@ import { mapGetters } from 'vuex'
  * effects that have images on the player.
  */
 export default {
-  name: 'active-scan',
-  props: ['cardOwner', 'card', 'attacks'],
+  name: 'ActiveScan',
   components: {
     'card-stack': CardStack
   },
+  props: ['cardOwner', 'card', 'attacks'],
   computed: {
     ...mapGetters(['game']),
     trojanImage () {

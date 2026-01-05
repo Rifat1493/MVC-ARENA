@@ -1,7 +1,13 @@
 <template>
-<div id="effect-notifications" v-if="showing">
-  <img class="icon highlight" :src="imagePath">
-</div>
+  <div
+    v-if="showing"
+    id="effect-notifications"
+  >
+    <img
+      class="icon highlight"
+      :src="imagePath"
+    >
+  </div>
 </template>
 
 
@@ -25,7 +31,7 @@ import { mapGetters } from 'vuex'
  * when it is shown.
  */
 export default {
-  name: 'effect-notifications',
+  name: 'EffectNotifications',
   data () {
     return {
       showing: false,
@@ -35,6 +41,16 @@ export default {
   },
   computed: {
     ...mapGetters(['game'])
+  },
+  created () {
+    // Add listeners for the effect events
+    bus.on('mimic-played', this.mimicPlayed)
+    bus.on('scan-used', this.scanUsed)
+  },
+  beforeUnmount () {
+    // Remove listeners for the events before the module is destroyed
+    bus.off('mimic-played', this.mimicPlayed)
+    bus.off('scan-used', this.scanUsed)
   },
   methods: {
     /**
@@ -53,16 +69,6 @@ export default {
       this.imagePath = 'static/cardImages/effects/SCAN.png'
       setTimeout(() => { this.showing = false }, this.timeout)
     }
-  },
-  created () {
-    // Add listeners for the effect events
-    bus.$on('mimic-played', this.mimicPlayed)
-    bus.$on('scan-used', this.scanUsed)
-  },
-  beforeDestroy () {
-    // Remove listeners for the events before the module is destroyed
-    bus.$off('mimic-played', this.mimicPlayed)
-    bus.$off('scan-used', this.scanUsed)
   }
 }
 </script>

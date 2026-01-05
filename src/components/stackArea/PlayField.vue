@@ -1,24 +1,33 @@
 <template>
-<div id="play-field" :class="{ play: isCurrentPlayer }"
-    @drop="onDrop" @dragover.prevent @dragenter.prevent>
+  <div
+    id="play-field"
+    :class="{ play: isCurrentPlayer }"
+    @drop="onDrop"
+    @dragover.prevent
+    @dragenter.prevent
+  >
+    <h3 id="main-func">
+      {{ player.name }}_main:
+    </h3>
 
-  <h3 id="main-func">{{ player.name }}_main:</h3>
+    <ul class="stack-list">
+      <div class="method">
+        <card-stack :stack="player.playField.method" />
+      </div>
 
-  <ul class="stack-list">
-    <div class="method">
-      <card-stack :stack="player.playField.method"/>
+      <li
+        v-for="stack in player.playField.stacks"
+        :key="stack.id"
+        class="card-stack"
+      >
+        <card-stack :stack="stack" />
+      </li>
+    </ul>
+
+    <div class="info-button">
+      <play-field-info />
     </div>
-
-    <li class="card-stack" v-for="stack in player.playField.stacks" v-bind:key="stack.id">
-      <card-stack :stack="stack"/>
-    </li>
-  </ul>
-
-  <div class="info-button">
-    <play-field-info/>
   </div>
-
-</div>
 </template>
 
 <script>
@@ -37,12 +46,12 @@ import { mapGetters } from 'vuex'
  * @vue-computed {bool} isCurrentPlayer - True if the player is the current player.
  */
 export default {
-  name: 'play-field',
-  props: ['player'],
+  name: 'PlayField',
   components: {
    'card-stack': CardStack,
    'play-field-info': PlayFieldInfo
   },
+  props: ['player'],
   computed: {
     ...mapGetters(['game']),
     isCurrentPlayer () {

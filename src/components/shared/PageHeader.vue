@@ -1,15 +1,15 @@
 <template>
-<div id="header">
+  <div id="header">
+    <h4 id="title">
+      Program Wars
+    </h4>
 
-  <h4 id="title"> Program Wars </h4>
+    <h3 id="heading">
+      <slot name="pageHeading" />
+    </h3>
 
-  <h3 id="heading">
-    <slot name="pageHeading"></slot>
-  </h3>
-
-  <side-menu id="menu"/>
-
-</div>
+    <side-menu id="menu" />
+  </div>
 </template>
 
 
@@ -33,7 +33,7 @@ import { mapGetters } from 'vuex'
  * </page-header>
  */
 export default {
-  name: 'page-header',
+  name: 'PageHeader',
   components: {
     'side-menu': SideMenu,
   },

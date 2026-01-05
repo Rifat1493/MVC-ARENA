@@ -1,27 +1,35 @@
 <template>
-<div id="error-page">
-
-  <div id="container">
-    <h1> Oops...
+  <div id="error-page">
+    <div id="container">
+      <h1>
+        Oops...
         <br>
-        Looks like something went wrong </h1>
+        Looks like something went wrong
+      </h1>
 
-    <br>
-    <h2> <b>Note...</b> Using your browser's Back, Forward, and Refresh buttons
-         will not work as expected on our site. Please use provided navigation
-         buttons or menu links to get around. </h2>
+      <br>
+      <h2>
+        <b>Note...</b> Using your browser's Back, Forward, and Refresh buttons
+        will not work as expected on our site. Please use provided navigation
+        buttons or menu links to get around.
+      </h2>
 
-    <button class="btn btn-primary my-btn" v-on:click="leaveGame()">
-      Back To Home
-    </button>
+      <button
+        class="btn btn-primary my-btn"
+        @click="leaveGame()"
+      >
+        Back To Home
+      </button>
 
-    <a class="btn btn-danger my-btn"
-        href="https://gitreports.com/issue/SibylLab/Program-Wars" target="_blank">
-       Report Issue 
-    </a>
+      <a
+        class="btn btn-danger my-btn"
+        href="https://gitreports.com/issue/SibylLab/Program-Wars"
+        target="_blank"
+      >
+        Report Issue 
+      </a>
+    </div>
   </div>
-
-</div>
 </template>
 
 <script>
@@ -36,7 +44,7 @@ import { mapActions } from 'vuex'
  * in the game.
  */
 export default {
-  name: 'error-page',
+  name: 'ErrorPage',
   methods: {
     ...mapActions(['leaveGame'])
   }

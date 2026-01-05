@@ -1,22 +1,22 @@
 module.exports = {
-  "root": true,
-  "env": {
+  root: true,
+  env: {
     "browser": true,
     "jquery": true,
     "node": true
   },
-  "extends": [
-    "plugin:vue/essential",
-    "eslint:recommended"
-  ],
-  "parserOptions": {
-    "parser": "babel-eslint",
-    "sourceType": "module"
+  extends: ['eslint:recommended', 'plugin:vue/vue3-recommended'], // 'eslint:recommended', 
+  parser: 'vue-eslint-parser',
+  parserOptions: {
+    parser: '@babel/eslint-parser',
+    requireConfigFile: false,
+    ecmaVersion: 'latest',
+    sourceType: 'module'
   },
-  "rules": {
-    "no-unused-vars": "warn"
+  rules: {
+    'vue/multi-word-component-names': 'off'
   },
-  "overrides": [
+  overrides: [
     {
       "files": [
         '**/__tests__/*.{j,t}s?(x)',
@@ -27,4 +27,4 @@ module.exports = {
       }
     }
   ]
-}
+};

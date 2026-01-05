@@ -1,86 +1,154 @@
 <template>
-<div class="modal-dialog modal-lg" role="document">
-  <div class="modal-content my-content">
-
-    <div class="modal-body">
-      <h3 class="modal-title"><b>Game Over</b></h3>
-      <div style="border: 0.5rem ridge grey; padding: 0.5rem; border-radius: 1rem; background-color: royalblue;">
-        <h3 style="color: white;">{{ winnerText }}</h3>
+  <div
+    class="modal-dialog modal-lg"
+    role="document"
+  >
+    <div class="modal-content my-content">
+      <div class="modal-body">
+        <h3 class="modal-title">
+          <b>Game Over</b>
+        </h3>
+        <div style="border: 0.5rem ridge grey; padding: 0.5rem; border-radius: 1rem; background-color: royalblue;">
+          <h3 style="color: white;">
+            {{ winnerText }}
+          </h3>
+        </div>
       </div>
-    </div>
 
-    <div>
-      <table class="table table-condensed" style="width: 90%; margin: auto">
-        <thead>
-          <tr style="font-size: 1.4rem"> <th>Players</th>
-            <th v-for="player in players" :key="player.id" style="text-align: center">
-              {{ player.name }} </th>
-          </tr>
-        </thead>
+      <div>
+        <table
+          class="table table-condensed"
+          style="width: 90%; margin: auto"
+        >
+          <thead>
+            <tr style="font-size: 1.4rem">
+              <th>Players</th>
+              <th
+                v-for="player in players"
+                :key="player.id"
+                style="text-align: center"
+              >
+                {{ player.name }}
+              </th>
+            </tr>
+          </thead>
         
-        <tbody style="font-size: 0.9rem;">
-          <tr> <th>Score</th>
-            <td v-for="player in players" :key="player.id">
-              {{ player.getScore() }} </td>
-          </tr>
-          <tr>
-            <td colspan="5" style="text-align: left;">
-              <h4><b>Bonuses</b></h4> </td>
-          </tr>
-          <tr> <th>Repetition Bonus</th>
-            <td v-for="player in players" :key="player.id">
-              {{ bonuses[player.id].repeat }} </td>
-          </tr>
-          <tr> <th>Variable Bonus</th>
-            <td v-for="player in players" :key="player.id">
-              {{ bonuses[player.id].variable }} </td>
-          </tr>
-          <tr> <th>Safety Bonus</th>
-            <td v-for="player in players" :key="player.id">
-              {{ bonuses[player.id].safety }} </td>
-          </tr>
-          <tr> <th>Nested Loops</th>
-            <td v-for="player in players" :key="player.id">
-              {{ bonuses[player.id].nested }} </td>
-          </tr>
-          <tr> <th>Defensive Programmer</th>
-            <td v-for="player in players" :key="player.id">
-              {{ bonuses[player.id].defensive }} </td>
-          </tr>
-          <tr> <th>Clean System</th>
-            <td v-for="player in players" :key="player.id">
-              {{ bonuses[player.id].clean }} </td>
-          </tr>
-          <tr> <th>Full Method</th>
-            <td v-for="player in players" :key="player.id">
-              {{ bonuses[player.id].method }} </td>
-          </tr>
-          <tr style="font-size: 1.5rem;"> <th>Final Score</th>
-            <td v-for="player in players" :key="player.id">
-              {{ player.getScore() + bonuses[player.id].total }} </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn btn-primary" data-dismiss="modal"
-          v-on:click="leaveGame">
-        Play Again
-      </button>
-    </div>
+          <tbody style="font-size: 0.9rem;">
+            <tr>
+              <th>Score</th>
+              <td
+                v-for="player in players"
+                :key="player.id"
+              >
+                {{ player.getScore() }}
+              </td>
+            </tr>
+            <tr>
+              <td
+                colspan="5"
+                style="text-align: left;"
+              >
+                <h4><b>Bonuses</b></h4>
+              </td>
+            </tr>
+            <tr>
+              <th>Repetition Bonus</th>
+              <td
+                v-for="player in players"
+                :key="player.id"
+              >
+                {{ bonuses[player.id].repeat }}
+              </td>
+            </tr>
+            <tr>
+              <th>Variable Bonus</th>
+              <td
+                v-for="player in players"
+                :key="player.id"
+              >
+                {{ bonuses[player.id].variable }}
+              </td>
+            </tr>
+            <tr>
+              <th>Safety Bonus</th>
+              <td
+                v-for="player in players"
+                :key="player.id"
+              >
+                {{ bonuses[player.id].safety }}
+              </td>
+            </tr>
+            <tr>
+              <th>Nested Loops</th>
+              <td
+                v-for="player in players"
+                :key="player.id"
+              >
+                {{ bonuses[player.id].nested }}
+              </td>
+            </tr>
+            <tr>
+              <th>Defensive Programmer</th>
+              <td
+                v-for="player in players"
+                :key="player.id"
+              >
+                {{ bonuses[player.id].defensive }}
+              </td>
+            </tr>
+            <tr>
+              <th>Clean System</th>
+              <td
+                v-for="player in players"
+                :key="player.id"
+              >
+                {{ bonuses[player.id].clean }}
+              </td>
+            </tr>
+            <tr>
+              <th>Full Method</th>
+              <td
+                v-for="player in players"
+                :key="player.id"
+              >
+                {{ bonuses[player.id].method }}
+              </td>
+            </tr>
+            <tr style="font-size: 1.5rem;">
+              <th>Final Score</th>
+              <td
+                v-for="player in players"
+                :key="player.id"
+              >
+                {{ player.getScore() + bonuses[player.id].total }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <div class="modal-footer">
-        <p><b>If you are comfortable with the concept & ready to participate in the post-game survey go-to: </b>
-
-          <a href="https://uleth.ca1.qualtrics.com/jfe/preview/SV_56jDOuF8Tor2VrU?Q_CHL=preview&Q_SurveyVersionID=current" target="_blank">Post Game Survey</a>
-      
-        </p>
- 
+        <button
+          class="btn btn-primary"
+          data-dismiss="modal"
+          @click="leaveGame"
+        >
+          Play Again
+        </button>
       </div>
 
+      <div class="modal-footer">
+        <p>
+          <b>If you are comfortable with the concept & ready to participate in the post-game survey go-to: </b>
+
+          <a
+            href="https://uleth.ca1.qualtrics.com/jfe/preview/SV_56jDOuF8Tor2VrU?Q_CHL=preview&Q_SurveyVersionID=current"
+            target="_blank"
+          >Post Game Survey</a>
+        </p>
+      </div>
+    </div>
   </div>
-</div>
 </template>
 
 
@@ -104,7 +172,7 @@ import { bus } from '@/components/shared/Bus'
  * @vue-computed {string} winnerText - A string of the name(s) of the winners.
  */
 export default {
-  name: 'winner-modal',
+  name: 'WinnerModal',
   data () {
     return {
       bonuses: [],
@@ -139,11 +207,11 @@ export default {
   created () {
     // Set winners list and add a listener to update it when the game ends.
     this.setWinners()
-    bus.$on('game-over', this.setWinners)
+    bus.on('game-over', this.setWinners)
   },
-  beforeDestroy () {
+  beforeUnmount () {
     // Remove the listener for game-over events
-    bus.$off('game-over', this.setWinners)
+    bus.off('game-over', this.setWinners)
   }
 }
 </script>

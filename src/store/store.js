@@ -6,10 +6,7 @@
  */
 
 import Home from '@/pages/pageStates/Home'
-import Vue from 'vue'
-import Vuex from 'vuex'
-
-Vue.use(Vuex)
+import { createStore } from 'vuex'
 
 import actions from './actions'
 import mutations from './mutations'
@@ -32,7 +29,7 @@ import getters from './getters'
  * @prop {Object} mutations - vuex mutations {@link mutations}
  * @prop {Object} actions -vuex actions {@link actions}
  */
-export const store = new Vuex.Store({
+export const store = createStore({
   state: {
     page: 'home',
     home: new Home(),

@@ -1,22 +1,35 @@
 <template>
-<div id="side-objectives" :key="bonuses.total">
-  <h3 id="title-text">bonus_points = {{ bonuses.total }}</h3>
+  <div
+    id="side-objectives"
+    :key="bonuses.total"
+  >
+    <h3 id="title-text">
+      bonus_points = {{ bonuses.total }}
+    </h3>
 
-  <!-- The small divisions give simple syntax higlighting to objective text -->
-  <ul style="color: #fff">
-    <li v-for="cond in conditions" v-bind:key="cond.if">
-      <div class="keyword">if</div>
-      ( <div class="cond"> {{ cond.if }}</div> ) { 
-      <div :class="['reward', {have: cond.val > 0}]">{{ cond.reward }}</div>
-      }
-    </li>
-  </ul>
+    <!-- The small divisions give simple syntax higlighting to objective text -->
+    <ul style="color: #fff">
+      <li
+        v-for="cond in conditions"
+        :key="cond.if"
+      >
+        <div class="keyword">
+          if
+        </div>
+        ( <div class="cond">
+          {{ cond.if }}
+        </div> ) { 
+        <div :class="['reward', {have: cond.val > 0}]">
+          {{ cond.reward }}
+        </div>
+        }
+      </li>
+    </ul>
 
-  <div id="info-button">
-    <side-objectives-info/>
+    <div id="info-button">
+      <side-objectives-info />
+    </div>
   </div>
-
-</div>
 </template>
 
 
@@ -39,15 +52,15 @@ import { mapGetters } from 'vuex'
  * a conditional statement. `{if: condition text, reward: body text, val: points given}`.
  */
 export default {
-  name: 'side-objectives',
+  name: 'SideObjectives',
+  components: {
+   'side-objectives-info': SideObjectivesInfo
+  },
   props: ['player'],
   data () {
     return {
       bonuses: null
     }
-  },
-  components: {
-   'side-objectives-info': SideObjectivesInfo
   },
   computed: {
     ...mapGetters(['game']),
@@ -70,6 +83,15 @@ export default {
       return conds
     }
   },
+  created () {
+    // Set bonuses and add listener to update bonuses on 'end-turn' events
+    this.setBonuses()
+    bus.on('end-turn', this.setBonuses)
+  },
+  beforeUnmount () {
+    // Remove listener for 'end-turn' events when destroyed
+    bus.off('end-turn', this.setBonuses)
+  },
   methods: {
     /**
      * Sets `bonuses` with the bonuses for the player.
@@ -77,15 +99,6 @@ export default {
     setBonuses () {
       this.bonuses = this.game.getPlayerBonuses(this.player)
     }
-  },
-  created () {
-    // Set bonuses and add listener to update bonuses on 'end-turn' events
-    this.setBonuses()
-    bus.$on('end-turn', this.setBonuses)
-  },
-  beforeDestroy () {
-    // Remove listener for 'end-turn' events when destroyed
-    bus.$off('end-turn', this.setBonuses)
   }
 }
 </script>

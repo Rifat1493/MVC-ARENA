@@ -1,22 +1,24 @@
 <template>
-<div>
+  <div>
+    <two-player-template>
+      <template #modals>
+        <winner-modal-beginner
+          id="winner-modal"
+          class="modal"
+          data-backdrop="static"
+          data-keyboard="false"
+        />
+      </template>
 
-  <two-player-template>
-    <template v-slot:modals>
-      <winner-modal-beginner id="winner-modal" class="modal"
-        data-backdrop='static' data-keyboard='false'/>
-    </template>
+      <template #p1-stack-area>
+        <play-field :player="game.getPlayer(0)" />
+      </template>
 
-    <template v-slot:p1-stack-area>
-      <play-field :player="game.getPlayer(0)"/>
-    </template>
-
-    <template v-slot:p2-stack-area>
-      <play-field :player="game.getPlayer(1)"/>
-    </template>
-  </two-player-template>
-
-</div>
+      <template #p2-stack-area>
+        <play-field :player="game.getPlayer(1)" />
+      </template>
+    </two-player-template>
+  </div>
 </template>
 
 <script>
@@ -32,7 +34,7 @@ import { mapGetters } from 'vuex'
  * for a different winner modal and stack area.
  */
 export default {
-  name: 'beginner-game',
+  name: 'BeginnerGame',
   components: {
     'two-player-template': TwoPlayerTemplate,
     'winner-modal-beginner': WinnerModalBeginner,

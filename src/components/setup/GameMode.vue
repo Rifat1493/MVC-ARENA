@@ -1,29 +1,42 @@
 <template>
-<div id="game-mode">
+  <div id="game-mode">
+    <h4 class="sub-heading">
+      Game Type
+    </h4>
 
-  <h4 class="sub-heading"> Game Type </h4>
-
-  <div class="drop-menu">
-    <div class="dropdown my-drop">
-      <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
-          data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        {{ home.mode }}
-      </button>
-
-      <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
-        <button v-for="mode in getModes" v-bind:key="mode"
-            v-on:click="home.changeMode(mode)" class="dropdown-item" type="button">
-          {{ mode }}
+    <div class="drop-menu">
+      <div class="dropdown my-drop">
+        <button
+          class="btn btn-sm btn-primary dropdown-toggle"
+          type="button"
+          data-toggle="dropdown"
+          aria-haspopup="true"
+          aria-expanded="false"
+        >
+          {{ home.mode }}
         </button>
+
+        <div
+          class="dropdown-menu"
+          aria-labelledby="dropdownMenu2"
+        >
+          <button
+            v-for="mode in getModes"
+            :key="mode"
+            class="dropdown-item"
+            type="button"
+            @click="home.changeMode(mode)"
+          >
+            {{ mode }}
+          </button>
+        </div>
+      </div>
+
+      <div class="describe">
+        {{ describe }}
       </div>
     </div>
-
-    <div class="describe">
-      {{ describe }}
-    </div>
   </div>
-
-</div>
 </template>
 
 <script>
@@ -39,7 +52,7 @@ import { mapGetters } from 'vuex'
  * @vue-computed {string} describe - A description of the current game mode.
  */
 export default {
-  name: 'game-mode',
+  name: 'GameMode',
   computed: {
     ...mapGetters(['home']),
     getModes () {

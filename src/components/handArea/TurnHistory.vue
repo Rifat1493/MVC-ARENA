@@ -1,18 +1,35 @@
 <template>
-<div id="turn-history">
-  <ul>
-    <li v-for="play in history" v-bind:key="play.type + Math.random()">
-      <img id="play-image" :src="image(play)">
-      <img id="player-image" :src="playerImage(play)">
-      <img id="target-image" v-if="hasTargetPlayer(play)" :src="targetImage(play)">
-      <img id="effect-icon" v-if="hasEffectIcon(play)" :src="effectImage(play)">
-    </li>
-  </ul>
+  <div id="turn-history">
+    <ul>
+      <li
+        v-for="play in history"
+        :key="play.type + Math.random()"
+      >
+        <img
+          id="play-image"
+          :src="image(play)"
+        >
+        <img
+          id="player-image"
+          :src="playerImage(play)"
+        >
+        <img
+          v-if="hasTargetPlayer(play)"
+          id="target-image"
+          :src="targetImage(play)"
+        >
+        <img
+          v-if="hasEffectIcon(play)"
+          id="effect-icon"
+          :src="effectImage(play)"
+        >
+      </li>
+    </ul>
 
-  <div id="info">
-    <turn-history-info/>
+    <div id="info">
+      <turn-history-info />
+    </div>
   </div>
-</div>
 </template>
 
 
@@ -38,7 +55,7 @@ import { mapGetters } from 'vuex'
  * that will fit in the display.
  */
 export default {
-  name: 'turn-history',
+  name: 'TurnHistory',
   components: {
     'turn-history-info': TurnHistoryInfo,
   },
