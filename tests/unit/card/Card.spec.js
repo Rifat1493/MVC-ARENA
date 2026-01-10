@@ -1,7 +1,12 @@
 import Card from '@/classes/card/Card'
 import Deck from '@/classes/deck/Deck'
 
-jest.mock('uuid/v1', () => jest.fn(() => { return "mocked_id" }))
+// jest.mock('uuid', () => jest.fn(() => { return "mocked_id" }))
+
+jest.mock('uuid', () => ({
+  v1: jest.fn(() => 'mocked_id'),
+}));
+
 jest.mock('@/classes/deck/Deck')
 
 describe('Card class', () => {
