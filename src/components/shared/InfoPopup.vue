@@ -1,21 +1,30 @@
 <template>
-<div id="info-component">
-  <input type='image' id='info-button' src='static/miscIcons/info.png'
-      v-on:click="active = true">
+  <div id="info-component">
+    <input
+      id="info-button"
+      type="image"
+      src="static/miscIcons/info.png"
+      @click="active = true"
+    >
 
-  <div id="info-popup" v-if="active">
-    <div class="backdrop">
-      <div class="container">
-        <slot></slot>
+    <div
+      v-if="active"
+      id="info-popup"
+    >
+      <div class="backdrop">
+        <div class="container">
+          <slot />
 
-        <button class="btn btn-sm btn-primary action" v-on:click="active = false">
-          Close
-        </button>
+          <button
+            class="btn btn-sm btn-primary action"
+            @click="active = false"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   </div>
-
-</div>
 </template>
 
 <script>
@@ -44,7 +53,7 @@
  * </info-popup>
  */
 export default {
-  name: 'info-popup',
+  name: 'InfoPopup',
   data () {
     return {
       active: false

@@ -1,26 +1,59 @@
 <template>
-<div id="player-effects">
+  <div id="player-effects">
+    <h5
+      id="good-effects-text"
+      :class="side"
+    >
+      <b>Threat Prevention</b>
+    </h5>
 
-    <h5 id="good-effects-text" :class="side"> <b>Threat Prevention</b> </h5>
-
-    <div id="good-effects" :class="side">
-      <div v-for="effect in positiveEffects" v-bind:key="effect.id"
-          class="effect">
-        <img class="effect-icon" :src="effect.image" :title="tooltip(effect)">
+    <div
+      id="good-effects"
+      :class="side"
+    >
+      <div
+        v-for="effect in positiveEffects"
+        :key="effect.id"
+        class="effect"
+      >
+        <img
+          class="effect-icon"
+          :src="effect.image"
+          :title="tooltip(effect)"
+        >
       </div>
     </div>
 
-    <h5 id="bad-effects-text" :class="side"> <b>Active Threats</b> </h5>
+    <h5
+      id="bad-effects-text"
+      :class="side"
+    >
+      <b>Active Threats</b>
+    </h5>
 
-    <div id="bad-effects" :class="side">
-      <div v-for="effect in negativeEffects" v-bind:key="effect.id"
-          class="effect">
-        <img class="effect-icon" :src="effect.image" :title="tooltip(effect)">
-        <div v-if="hasLimit(effect)" class="turns"> {{ effect.turnsLeft }} </div>
+    <div
+      id="bad-effects"
+      :class="side"
+    >
+      <div
+        v-for="effect in negativeEffects"
+        :key="effect.id"
+        class="effect"
+      >
+        <img
+          class="effect-icon"
+          :src="effect.image"
+          :title="tooltip(effect)"
+        >
+        <div
+          v-if="hasLimit(effect)"
+          class="turns"
+        >
+          {{ effect.turnsLeft }}
+        </div>
       </div>
     </div>
-
-</div>
+  </div>
 </template>
 
 <script>
@@ -38,7 +71,7 @@ import tooltips from '@/components/tooltips'
  * status effects on the player that should be displayed, i.e. have an image.
  */
 export default {
-  name: 'player-effect',
+  name: 'PlayerEffect',
   props: ['player', 'side'],
   computed: {
     positiveEffects () {

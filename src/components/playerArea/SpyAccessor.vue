@@ -1,20 +1,30 @@
 <template>
-<div id="spy-accessor">
+  <div id="spy-accessor">
+    <button
+      v-if="canSpy"
+      id="spy-button"
+      :class="['acs', 'btn', 'btn-sm', spyStyle]" 
+      @click="spy()"
+    >
+      {{ spyText }}
+    </button>
 
-  <button id="spy-button" v-if="canSpy" :class="['acs', 'btn', 'btn-sm', spyStyle]" 
-      v-on:click="spy()">
-    {{ spyText }}
-  </button>
-
-  <div id="hand-box" v-if="showHand">
-    <h3> {{ player.name }}'s hand </h3>
-    <div style="margin-top: 3%;">
-      <img v-for="card in player.hand.cards" v-bind:key="card.id"
-          :src="card.image" class="spy-card" :draggable="false">
+    <div
+      v-if="showHand"
+      id="hand-box"
+    >
+      <h3> {{ player.name }}'s hand </h3>
+      <div style="margin-top: 3%;">
+        <img
+          v-for="card in player.hand.cards"
+          :key="card.id"
+          :src="card.image"
+          class="spy-card"
+          :draggable="false"
+        >
+      </div>
     </div>
   </div>
-
-</div>
 </template>
 
 <script>
@@ -34,7 +44,7 @@ import { mapGetters } from 'vuex'
  * the spyware effect on them.
  */
 export default {
-  name: 'spy-accessor',
+  name: 'SpyAccessor',
   props: ['player'],
   data () {
     return {

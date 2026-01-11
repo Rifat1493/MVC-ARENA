@@ -1,31 +1,44 @@
 <template>
-<div id="player-area" :class="side">
+  <div
+    id="player-area"
+    :class="side"
+  >
+    <div id="details">
+      <slot name="details">
+        <player-details
+          :player="player"
+          :side="side"
+        />
+      </slot>
+    </div>
 
-  <div id="details">
-    <slot name="details">
-      <player-details :player="player" :side="side"/>
-    </slot>
+    <div id="score">
+      <slot name="score">
+        <player-score
+          :player="player"
+          :side="side"
+        />
+      </slot>
+    </div>
+
+    <div id="effects">
+      <slot name="effects">
+        <player-effects
+          :player="player"
+          :side="side"
+        />
+      </slot>
+    </div>
+
+    <div
+      v-if="showInfoButton"
+      id="info"
+    >
+      <slot name="info">
+        <player-area-info />
+      </slot>
+    </div>
   </div>
-
-  <div id="score">
-    <slot name="score">
-      <player-score :player="player" :side="side"/>
-    </slot>
-  </div>
-
-  <div id="effects">
-    <slot name="effects">
-      <player-effects :player="player" :side="side"/>
-    </slot>
-  </div>
-
-  <div id="info" v-if="showInfoButton">
-    <slot name="info">
-     <player-area-info/>
-    </slot>
-  </div>
-
-</div>
 </template>
 
 
@@ -59,14 +72,14 @@ import PlayerAreaInfo from '@/components/info/PlayerAreaInfo'
  * we only need to display an info button for a single player area.
  */
 export default {
-  name: 'player-area',
-  props: ['player', 'side'],
+  name: 'PlayerArea',
   components: {
     'player-details': PlayerDetails,
     'player-score': PlayerScore,
     'player-effects': PlayerEffects,
     'player-area-info': PlayerAreaInfo
   },
+  props: ['player', 'side'],
   computed: {
     showInfoButton () {
       return this.player.id === 0

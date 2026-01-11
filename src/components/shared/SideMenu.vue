@@ -1,23 +1,56 @@
 <template>
-<div>
-  <!-- Modals -->
-  <backstory-modal id="backstoryModal" class="modal backstory "/>
-  <credits-modal id="creditsModal" class="modal credits"/>
+  <div>
+    <!-- Modals -->
+    <backstory-modal
+      id="backstoryModal"
+      class="modal backstory "
+    />
+    <credits-modal
+      id="creditsModal"
+      class="modal credits"
+    />
 
-  <!-- Side menu using a sidenav -->
-  <input type='image'  src='static/miscIcons/burgerIcon.png'
-      v-on:click="openMenu()" style="width: 100%; height: 100%;">
-  <div id="mySidenav" class="sidenav">
-    <a class="closebtn menu-item" v-on:click="closeMenu()"> &times; </a>
-    <a class="menu-item" v-if="inGame" v-on:click="leaveGame()"> New Game </a>
-    <a class="menu-item" data-toggle="modal" data-target=".backstory"> Backstory </a>
-    <a class="menu-item" v-on:click="openHelp()"> Rules </a>
-    <a class="menu-item" data-toggle="modal" data-target=".credits"> Credits </a>
-    <a class="menu-item" href="https://gitreports.com/issue/SibylLab/Program-Wars"
-        target="_blank"> Report Issue </a>
+    <!-- Side menu using a sidenav -->
+    <input
+      type="image"
+      src="static/miscIcons/burgerIcon.png"
+      style="width: 100%; height: 100%;"
+      @click="openMenu()"
+    >
+    <div
+      id="mySidenav"
+      class="sidenav"
+    >
+      <a
+        class="closebtn menu-item"
+        @click="closeMenu()"
+      > &times; </a>
+      <a
+        v-if="inGame"
+        class="menu-item"
+        @click="leaveGame()"
+      > New Game </a>
+      <a
+        class="menu-item"
+        data-toggle="modal"
+        data-target=".backstory"
+      > Backstory </a>
+      <a
+        class="menu-item"
+        @click="openHelp()"
+      > Rules </a>
+      <a
+        class="menu-item"
+        data-toggle="modal"
+        data-target=".credits"
+      > Credits </a>
+      <a
+        class="menu-item"
+        href="https://gitreports.com/issue/SibylLab/Program-Wars"
+        target="_blank"
+      > Report Issue </a>
+    </div>
   </div>
-
-</div>
 </template>
 
 
@@ -39,7 +72,7 @@ import { mapState, mapGetters, mapActions, mapMutations } from 'vuex'
  * a game. This link takes the player back to the home screen to setup the new game.
  */
 export default {
-  name: 'side-menu',
+  name: 'SideMenu',
   components: {
     'backstory-modal': BackstoryModal,
     'credits-modal': CreditsModal

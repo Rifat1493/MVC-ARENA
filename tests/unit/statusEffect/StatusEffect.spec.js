@@ -1,6 +1,10 @@
 import StatusEffect from '@/classes/statusEffect/StatusEffect'
 
-jest.mock('uuid/v1', () => jest.fn(() => { return "mocked_id" }))
+//jest.mock('uuid', () => jest.fn(() => { return "mocked_id" }))
+
+jest.mock('uuid', () => ({
+  v1: jest.fn(() => 'mocked_id'),
+}));
 
 describe('StatusEffect', () => {
   test('creating a new status effect for a card effect', () => {

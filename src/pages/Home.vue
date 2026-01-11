@@ -1,22 +1,35 @@
 <template>
-<div id="home-page">
-  <page-header>
-    <template v-slot:pageHeading> Welcome to Program Wars! </template>
-  </page-header>
+  <div id="home-page">
+    <page-header>
+      <template #pageHeading>
+        Welcome to Program Wars!
+      </template>
+    </page-header>
 
-  <div id="game-setup" class="centered">
-    <game-mode/>
-    <select-level/>
-    <add-players/>
+    <div
+      id="game-setup"
+      class="centered"
+    >
+      <game-mode />
+      <select-level />
+      <add-players />
 
-    <div id="message" class="centered"> {{ home.message }} </div>
-    <button id="go" class="centered btn btn-success" v-on:click="playGame()"
-        :disabled="!home.hasEnoughPlayers()">
-      Play
-    </button>
+      <div
+        id="message"
+        class="centered"
+      >
+        {{ home.message }}
+      </div>
+      <button
+        id="go"
+        class="centered btn btn-success"
+        :disabled="!home.hasEnoughPlayers()"
+        @click="playGame()"
+      >
+        Play
+      </button>
+    </div>
   </div>
-
-</div>
 </template>
 
 
@@ -31,7 +44,7 @@ import { mapActions, mapGetters } from 'vuex'
  * The main landing page component for Program Wars where players set up and start games.
  */
 export default {
-  name: 'home-page',
+  name: 'HomePage',
   components: {
     'page-header': PageHeader,
     'game-mode': GameMode,

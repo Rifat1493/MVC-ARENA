@@ -1,24 +1,31 @@
 <template>
-<div id='search'>
-  <div class="backdrop">
+  <div id="search">
+    <div class="backdrop">
+      <div class="popup">
+        <h3 class="title">
+          <b>Search</b>
+        </h3>
 
-    <div class="popup">
-      <h3 class="title"> <b>Search</b> </h3>
+        <div class="content">
+          <img
+            v-for="card in deckCards"
+            :key="card.id"
+            :src="card.image"
+            :class="['card', { active: isSelected(card) }]"
+            @click="select(card)"
+          >
+        </div>
 
-      <div class="content">
-        <img v-for="card in deckCards" v-bind:key="card.id"
-          :src="card.image" :class="['card', { active: isSelected(card) }]"
-          v-on:click="select(card)">
+        <button
+          class="btn btn-success my-btn"
+          :disabled="!selected"
+          @click="choose"
+        >
+          Choose Card
+        </button>
       </div>
-
-      <button class="btn btn-success my-btn" v-on:click="choose"
-          :disabled="!selected">
-        Choose Card
-      </button>
     </div>
-
   </div>
-</div>
 </template>
 
 <script>
@@ -41,7 +48,7 @@ import { mapGetters } from 'vuex'
  * are not `N` cards, the remaining cards in the deck. Exculding `search` cards.
  */
 export default {
-  name: 'search',
+  name: 'Search',
   props: ['cardOwner', 'card', 'deck'],
   data () {
     return {
@@ -53,6 +60,12 @@ export default {
     deckCards () {
       const cards = this.deck.cards.filter(c => c.type !== 'SEARCH')
       return cards.slice(0, this.card.value)
+    }
+  },
+  created () {
+    // Ensures that there are cards to search
+    if (this.deckCards === 0) {
+      this.deck.refresh()
     }
   },
   methods: {
@@ -79,12 +92,6 @@ export default {
         card: this.card, cardOwner: this.cardOwner,
         chosenCard: this.selected, deck: this.deck
       })
-    }
-  },
-  created () {
-    // Ensures that there are cards to search
-    if (this.deckCards === 0) {
-      this.deck.refresh()
     }
   }
 }

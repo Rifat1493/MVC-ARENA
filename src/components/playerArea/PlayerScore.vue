@@ -1,19 +1,22 @@
 <template>
-<div id="player-score" :style="{ 'text-align': side }">
-
+  <div
+    id="player-score"
+    :style="{ 'text-align': side }"
+  >
     <h5 class="score-title">
       <b>Score:</b> <b>{{ game.getPlayerScore(player.id) }}/{{ game.scoreLimit }}</b>
     </h5>
 
-    <meter class="score-meter"
-       :max="game.scoreLimit" min=0
-       :value="game.getPlayerScore(player.id)"
-       :high="game.scoreLimit * 0.75"
-       :low="game.scoreLimit * 0.50"
-       :optimum="game.scoreLimit">
-    </meter>
-
-</div>
+    <meter
+      class="score-meter"
+      :max="game.scoreLimit"
+      min="0"
+      :value="game.getPlayerScore(player.id)"
+      :high="game.scoreLimit * 0.75"
+      :low="game.scoreLimit * 0.50"
+      :optimum="game.scoreLimit"
+    />
+  </div>
 </template>
 
 <script>
@@ -26,7 +29,7 @@ import { mapGetters } from 'vuex'
  * @vue-prop {string} side - The side of the screen it is on `left | right`.
  */
 export default {
-  name: 'player-score',
+  name: 'PlayerScore',
   props: ['player', 'side'],
   computed: {
     ...mapGetters(['game']),

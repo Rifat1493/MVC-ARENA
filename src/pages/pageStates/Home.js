@@ -58,7 +58,7 @@ class Home {
     }
     this.mode = newMode
     this.level = deckData[this.mode].levels[0]
-    bus.$emit('change-mode', this.mode)
+    bus.emit('change-mode', this.mode)
   }
 
   /**

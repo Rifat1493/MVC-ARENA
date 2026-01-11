@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <router-view></router-view>
+    <router-view />
   </div>
 </template>
 
@@ -11,7 +11,7 @@
    * and components pushed by the router.
    */
   export default {
-    name: 'app'
+    name: 'App'
   }
 </script>
 

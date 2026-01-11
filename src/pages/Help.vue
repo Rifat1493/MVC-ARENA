@@ -1,32 +1,39 @@
 <template>
-<div id="help-page">
+  <div id="help-page">
+    <div class="side-nav">
+      <h2> Help Pages </h2>
+      <br><br>
 
-  <div class='side-nav'>
-    <h2> Help Pages </h2>
-    <br><br>
-
-    <!-- For your page to be viewable add a link like these. Just replace the
+      <!-- For your page to be viewable add a link like these. Just replace the
          string in open() with a simple name for your page. -->
-    <a v-on:click="open('intro')"> Introduction </a>
-    <a v-on:click="open('play')"> Card Types</a>
-    <a v-on:click="open('game')"> Gameplay</a>
-  </div>
+      <a @click="open('intro')"> Introduction </a>
+      <a @click="open('play')"> Card Types</a>
+      <a @click="open('game')"> Gameplay</a>
+    </div>
 
-  <div class="help-content">
-    <!-- These create components using the markdown in your markdown file
+    <div class="help-content">
+      <!-- These create components using the markdown in your markdown file
          for the page. Save the imported page into a data member and use it
          as the source. The text in isOpen() should be the name you used with
          your link in the nav list. -->
-    <vue-markdown v-if="isOpen('intro')" :source="intro"/>
-    <vue-markdown v-if="isOpen('play')" :source="play"/>
-    <vue-markdown v-if="isOpen('game')" :source="game"/>
+      <vue-markdown
+        v-if="isOpen('intro')"
+        :source="intro"
+      />
+      <vue-markdown
+        v-if="isOpen('play')"
+        :source="play"
+      />
+      <vue-markdown
+        v-if="isOpen('game')"
+        :source="game"
+      />
+    </div>
   </div>
-
-</div>
 </template>
 
 <script>
-import VueMarkdown from 'vue-markdown'
+import VueMarkdown from 'vue-markdown-render'
 
 // Loading your markdown file requires the 'raw-loader!' prefix to load the
 // markdown as a string. Save the import into a data member so you can access it
@@ -35,8 +42,17 @@ import helpIntro from 'raw-loader!@/markdown/helpIntro.md'
 import howToPlay from 'raw-loader!@/markdown/howToPlay.md'
 import gameplay from  'raw-loader!@/markdown/gameplay.md'
 
+// import helpIntro from '@/markdown/helpIntro.md?raw'
+// import howToPlay from '@/markdown/howToPlay.md?raw'
+// import gameplay from  '@/markdown/gameplay.md?raw'
+
+
+
 export default {
-  name: 'help-page',
+  name: 'HelpPage',
+  components: {
+    'vue-markdown': VueMarkdown
+  },
   data () {
     return {
       page: 'intro',
@@ -45,9 +61,6 @@ export default {
       play: howToPlay,
       game: gameplay
     }
-  },
-  components: {
-    'vue-markdown': VueMarkdown
   },
   methods: {
     open (page) {

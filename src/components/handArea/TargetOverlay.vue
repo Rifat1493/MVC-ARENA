@@ -1,15 +1,17 @@
 <template>
-<div id="target-overlay">
+  <div id="target-overlay">
+    <h5> {{ titleText }} </h5>
 
-  <h5> {{ titleText }} </h5>
-
-  <button id="target-button" class="btn btn-sm btn-primary my-btn"
-      v-for="target in targetPlayers" v-bind:key="target.id"
-      v-on:click="playSpecialCard(target)">
-    {{ buttonText(target) }}
-  </button>
-
-</div>
+    <button
+      v-for="target in targetPlayers"
+      id="target-button"
+      :key="target.id"
+      class="btn btn-sm btn-primary my-btn"
+      @click="playSpecialCard(target)"
+    >
+      {{ buttonText(target) }}
+    </button>
+  </div>
 </template>
 
 
@@ -32,7 +34,7 @@ import { mapGetters } from 'vuex'
  * can be played on, can be empty if there are no valid players.
  */
 export default {
-  name: 'target-overlay',
+  name: 'TargetOverlay',
   props: ['card', 'player'],
   computed: {
     ...mapGetters(['game']),

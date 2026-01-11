@@ -1,20 +1,31 @@
 <template>
-<div id="stack" :key="update" @drop="onDrop"
-    @dragover.prevent @dragenter.prevent>
+  <div
+    id="stack"
+    :key="update"
+    @drop="onDrop"
+    @dragover.prevent
+    @dragenter.prevent
+  >
+    <div style="text-align: center">
+      <h5
+        style="margin:0; margin-top: 0.2rem;"
+        :class="[scoreClass]"
+      >
+        {{ scoreText }}: {{ stack.getScore() }}
+      </h5>
+    </div>
 
-  <div style="text-align: center">
-    <h5 style="margin:0; margin-top: 0.2rem;" :class="[scoreClass]">
-      {{ scoreText }}: {{ stack.getScore() }}
-    </h5>
+    <ul id="card-list">
+      <img
+        v-for="card in stack.cards"
+        :key="card.id"
+        :src="card.image"
+        :class="['card', shadow(card)]"
+        :style="{'margin-right': overlap}"
+        draggable="false"
+      >
+    </ul>
   </div>
-
-  <ul id="card-list">
-    <img v-for="card in stack.cards" v-bind:key="card.id" :src="card.image"
-        :class="['card', shadow(card)]" :style="{'margin-right': overlap}"
-        draggable="false">
-  </ul>
-
-</div>
 </template>
 
 <script>
@@ -47,7 +58,7 @@ import { mapGetters } from 'vuex'
  * 'Score' for normal stacks and 'MethodStack' for method stacks.
  */
 export default {
-  name: 'card-stack',
+  name: 'CardStack',
   props: ['stack'],
   data () {
     return {
@@ -82,6 +93,16 @@ export default {
     scoreText () {
       return this.stack.isMethod ? 'MethodStack' : 'Score'
     }
+  },
+  created () {
+    // Sets the component up to listen for these events
+    bus.on('select-card', this.refresh)
+    bus.on('card-played', this.cardPlayed)
+  },
+  beforeUnmount () {
+    // Removes listeners for these events when the component is destroyed
+    bus.off('select-card', this.refresh)
+    bus.off('card-played', this.cardPlayed)
   },
   methods: {
     /**
@@ -167,16 +188,6 @@ export default {
         this.refresh()
       }
     }
-  },
-  created () {
-    // Sets the component up to listen for these events
-    bus.$on('select-card', this.refresh)
-    bus.$on('card-played', this.cardPlayed)
-  },
-  beforeDestroy () {
-    // Removes listeners for these events when the component is destroyed
-    bus.$off('select-card', this.refresh)
-    bus.$off('card-played', this.cardPlayed)
   }
 }
 </script>

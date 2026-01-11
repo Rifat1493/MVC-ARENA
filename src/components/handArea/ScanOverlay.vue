@@ -1,14 +1,21 @@
 <template>
-<div id="scan-overlay">
-  <active-scan v-if="activeScan" :attacks="getAttacks"
-      :cardOwner="player" :card="card"/>
+  <div id="scan-overlay">
+    <active-scan
+      v-if="activeScan"
+      :attacks="getAttacks"
+      :card-owner="player"
+      :card="card"
+    />
 
-  <h5> {{ titleText }} </h5>
-  <button v-if="canScan" class="btn btn-sm btn-primary my-btn" v-on:click="playScan()">
-    Activate
-  </button>
-
-</div>
+    <h5> {{ titleText }} </h5>
+    <button
+      v-if="canScan"
+      class="btn btn-sm btn-primary my-btn"
+      @click="playScan()"
+    >
+      Activate
+    </button>
+  </div>
 </template>
 
 
@@ -34,15 +41,15 @@ import { mapGetters } from 'vuex'
  * @vue-computed {bool} needToClean - True if there are any attakcs on the player.
  */
 export default {
-  name: 'scan-overlay',
+  name: 'ScanOverlay',
+  components: {
+    'active-scan': ActiveScan
+  },
   props: ['card', 'player'],
   data () {
     return {
       activeScan: false
     }
-  },
-  components: {
-    'active-scan': ActiveScan
   },
   computed: {
     ...mapGetters(['game']),

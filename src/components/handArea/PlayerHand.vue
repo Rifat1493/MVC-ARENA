@@ -1,22 +1,52 @@
 <template>
-<div id="player-hand" :key="update">
+  <div
+    id="player-hand"
+    :key="update"
+  >
+    <div
+      v-for="card in player.hand.cards"
+      :key="card.id"
+      class="player-card"
+    >
+      <img
+        :src="cardImage(card)"
+        :class="['card', cardShadow(card)]"
+        :draggable="canDrag(card)"
+        @dragstart="startDrag($event, card)"
+        @mouseover="select(card)"
+      >
 
-  <div class="player-card" v-for="card in player.hand.cards" v-bind:key="card.id">
-    <img :src="cardImage(card)" :class="['card', cardShadow(card)]"
-      :draggable="canDrag(card)" v-on:dragstart="startDrag($event, card)"
-      v-on:mouseover="select(card)">
+      <input
+        v-if="isCurrentCard(card)"
+        id="discard-button"
+        type="image"
+        title="Discard"
+        src="static/miscIcons/trash.png"
+        @click="discard(card)"
+      >
 
-    <input type="image" id="discard-button" title="Discard" v-if="isCurrentCard(card)"
-       src="static/miscIcons/trash.png" v-on:click="discard(card)">
-
-    <div class="overlay" v-if="showOverlay(card)">
-      <scan-overlay v-if="isScan(card.type)" :card="card" :player="player"/>
-      <algorithm-overlay v-if="isAlgorithm(card.type)" :card="card" :owner="player"/>
-      <target-overlay v-if="isOther(card.type)" :card="card" :player="player"/>
+      <div
+        v-if="showOverlay(card)"
+        class="overlay"
+      >
+        <scan-overlay
+          v-if="isScan(card.type)"
+          :card="card"
+          :player="player"
+        />
+        <algorithm-overlay
+          v-if="isAlgorithm(card.type)"
+          :card="card"
+          :owner="player"
+        />
+        <target-overlay
+          v-if="isOther(card.type)"
+          :card="card"
+          :player="player"
+        />
+      </div>
     </div>
   </div>
-
-</div>
 </template>
 
 <script>
@@ -34,17 +64,17 @@ import { mapGetters } from 'vuex'
  * @vue-data {bool} update - When this changes value the component will redraw itself.
  */
 export default {
-  name: 'player-hand',
+  name: 'PlayerHand',
+  components: {
+    'target-overlay': TargetOverlay,
+    'scan-overlay': ScanOverlay,
+    'algorithm-overlay': AlgorithmOverlay
+  },
   props: ['player'],
   data () {
     return {
       update: true,
     }
-  },
-  components: {
-    'target-overlay': TargetOverlay,
-    'scan-overlay': ScanOverlay,
-    'algorithm-overlay': AlgorithmOverlay
   },
   computed: {
     ...mapGetters(['game'])
@@ -142,7 +172,7 @@ export default {
       if (!this.isCurrentCard(card) && !this.game.wait) {
         this.game.setCurrentCard(card)
         this.update = !this.update
-        bus.$emit('select-card')
+        bus.emit('select-card')
       }
     },
     /**

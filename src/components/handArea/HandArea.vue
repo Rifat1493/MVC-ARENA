@@ -1,38 +1,43 @@
 <template>
-<div id="hand-area">
-  <slot name="buttons">
-    <button class="btn btn-sm btn-primary my-btn"
-        v-if="canPass" v-on:click="pass"
-        title="Discard your hand and draw 5 new cards">
-      <b>PASS</b>
-    </button>
-    <button class="btn btn-sm btn-danger my-btn" v-on:click="redraw"
+  <div id="hand-area">
+    <slot name="buttons">
+      <button
+        v-if="canPass"
+        class="btn btn-sm btn-primary my-btn"
         title="Discard your hand and draw 5 new cards"
-        :disabled="!canRedraw">
-      <b>REDRAW</b>
-      <span v-if="redrawOnCD"> (ready in {{ redrawCD }}) </span>
-    </button>
-  </slot>
-
-  <div id="info">
-    <slot id="info">
-      <turn-area-info/>
+        @click="pass"
+      >
+        <b>PASS</b>
+      </button>
+      <button
+        class="btn btn-sm btn-danger my-btn"
+        title="Discard your hand and draw 5 new cards"
+        :disabled="!canRedraw"
+        @click="redraw"
+      >
+        <b>REDRAW</b>
+        <span v-if="redrawOnCD"> (ready in {{ redrawCD }}) </span>
+      </button>
     </slot>
-  </div>
 
-  <div id="hand">
-    <slot name="hand">
-      <player-hand :player="game.currentPlayer()"/>
-    </slot>
-  </div>
+    <div id="info">
+      <slot id="info">
+        <turn-area-info />
+      </slot>
+    </div>
 
-  <div id="turns">
-    <slot name="history">
-      <turn-history/>
-    </slot>
-  </div>
+    <div id="hand">
+      <slot name="hand">
+        <player-hand :player="game.currentPlayer()" />
+      </slot>
+    </div>
 
-</div>
+    <div id="turns">
+      <slot name="history">
+        <turn-history />
+      </slot>
+    </div>
+  </div>
 </template>
 
 
@@ -74,7 +79,7 @@ import { mapGetters } from 'vuex'
  * false otherwise.
  */
 export default {
-  name: 'hand-area',
+  name: 'HandArea',
   components: {
     'turn-area-info': TurnAreaInfo,
     'turn-history': TurnHistory,

@@ -1,19 +1,39 @@
 <template>
-<div id='stacks-area' :key="activeTab" :class="{ play: showShadow }">
+  <div
+    id="stacks-area"
+    :key="activeTab"
+    :class="{ play: showShadow }"
+  >
+    <div
+      v-if="!player.isAI"
+      id="tabs"
+      :class="tabSide"
+    >
+      <ul>
+        <li
+          :class="['tab', { active: isActiveTab(1) }]"
+          @click="changeTab(1)"
+        >
+          Stacks
+        </li>
+        <li
+          :class="['tab', { active: isActiveTab(2) }]"
+          @click="changeTab(2)"
+        >
+          Bonus
+        </li>
+      </ul>
+    </div>
 
-  <div id="tabs" v-if="!player.isAI" :class="tabSide">
-    <ul>
-      <li v-on:click="changeTab(1)" :class="['tab', { active: isActiveTab(1) }]">
-        Stacks </li>
-      <li v-on:click="changeTab(2)" :class="['tab', { active: isActiveTab(2) }]">
-        Bonus </li>
-    </ul>
+    <play-field
+      v-if="isActiveTab(1)"
+      :player="player"
+    />
+    <side-objectives
+      v-if="isActiveTab(2)"
+      :player="player"
+    />
   </div>
-
-  <play-field v-if="isActiveTab(1)" :player="player"/>
-  <side-objectives v-if="isActiveTab(2)" :player="player"/>
-
-</div>
 </template>
 
 
@@ -35,16 +55,16 @@ import { mapGetters } from 'vuex'
  * the play area should be highlighted.
  */
 export default {
-  name: 'stacks-area',
+  name: 'StacksArea',
+  components: {
+    'play-field': PlayField,
+    'side-objectives': SideObjectives
+  },
   props: ['player', 'tabSide'],
   data () {
     return {
       activeTab: 1
     }
-  },
-  components: {
-    'play-field': PlayField,
-    'side-objectives': SideObjectives
   },
   computed: {
     ...mapGetters(['game']),
