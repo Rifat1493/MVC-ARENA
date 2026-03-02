@@ -38,13 +38,9 @@ import VueMarkdown from 'vue-markdown-render'
 // Loading your markdown file requires the 'raw-loader!' prefix to load the
 // markdown as a string. Save the import into a data member so you can access it
 // in the component.
-import helpIntro from 'raw-loader!@/markdown/helpIntro.md'
-import howToPlay from 'raw-loader!@/markdown/howToPlay.md'
-import gameplay from  'raw-loader!@/markdown/gameplay.md'
-
-// import helpIntro from '@/markdown/helpIntro.md?raw'
-// import howToPlay from '@/markdown/howToPlay.md?raw'
-// import gameplay from  '@/markdown/gameplay.md?raw'
+import helpIntro from '@/markdown/helpIntro.md?raw'
+import howToPlay from '@/markdown/howToPlay.md?raw'
+import gameplay from  '@/markdown/gameplay.md?raw'
 
 
 

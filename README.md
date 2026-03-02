@@ -24,3 +24,8 @@ To access the current dev version go to [https://program-wars-dev.firebaseapp.co
 If you would like to contribute to the project, see [CONTRIBUTING](CONTRIBUTING.md).
 
 For more information about the project, refer to the [wiki](https://github.com/johnanvik/program-wars/wiki).
+
+```bash
+$ npm install
+
+```
