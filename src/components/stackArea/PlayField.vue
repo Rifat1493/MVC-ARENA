@@ -10,19 +10,27 @@
       {{ player.name }}_main:
     </h3>
 
-    <ul class="stack-list">
-      <div class="method">
-        <card-stack :stack="player.playField.method" />
-      </div>
-
-      <li
-        v-for="stack in player.playField.stacks"
-        :key="stack.id"
-        class="card-stack"
+    <div class="lanes-container">
+      <div
+        v-for="laneIndex in 3"
+        :key="laneIndex"
+        class="lane"
       >
-        <card-stack :stack="stack" />
-      </li>
-    </ul>
+        <div class="method">
+          <card-stack :stack="player.playField.method" />
+        </div>
+
+        <ul class="stack-list">
+          <li
+            v-for="stack in getLaneStacks(laneIndex - 1)"
+            :key="stack.id"
+            class="card-stack"
+          >
+            <card-stack :stack="stack" />
+          </li>
+        </ul>
+      </div>
+    </div>
 
     <div class="info-button">
       <play-field-info />
@@ -59,6 +67,15 @@ export default {
     }
   },
   methods: {
+    /**
+     * Returns the stacks that belong in the given lane index (0, 1, or 2).
+     * Stacks are distributed round-robin across the 3 lanes.
+     * @param {int} laneIndex - The 0-based lane index.
+     * @return {Stack[]} The stacks for that lane.
+     */
+    getLaneStacks (laneIndex) {
+      return this.player.playField.stacks.filter((_, i) => i % 3 === laneIndex)
+    },
     /**
      * Handles a given event when a card is dropped in the playField.
      *
@@ -97,8 +114,10 @@ export default {
   background-color: #333333;
   border: ridge #a0a0a0 0.5rem;
   border-radius: 0.5rem;
-  overflow: auto;
+  overflow: hidden;
   text-align: left;
+  display: flex;
+  flex-direction: column;
 }
 
 #main-func {
@@ -106,32 +125,54 @@ export default {
   margin-top: 0.2rem;
   margin-left: 0.2rem;
   color: #fff;
+  flex-shrink: 0;
 }
 
+/* ── Lanes ─────────────────────────────────────────────────── */
+.lanes-container {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  overflow: hidden;
+}
+
+.lane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  padding: 0.3rem;
+  border-right: 2px solid #a0a0a0;
+}
+
+.lane:last-child {
+  border-right: none;
+}
+
+/* ── Method stack in each lane ──────────────────────────────── */
 .method {
-  display: inline-block;
-  vertical-align: top;
+  flex-shrink: 0;
   background-color: #222222;
   border: solid white 0.2rem;
   color: white;
-  width: 15rem;
-  height: 9rem;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 0.3rem;
 }
 
+/* ── Regular stacks below the method stack ──────────────────── */
 .stack-list {
   list-style: none;
   margin: 0;
-  margin-top: 0.2rem;
   padding: 0;
-  text-align: left;
 }
 
 .card-stack {
-  position: relative;
-  display: inline-block;
-  margin-left: 0.3rem;
+  display: block;
+  margin-bottom: 0.3rem;
 }
 
+/* ── Info button ────────────────────────────────────────────── */
 .info-button {
   position: absolute;
   top: 0.5rem;
