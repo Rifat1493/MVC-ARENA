@@ -91,7 +91,7 @@ export default {
       return this.stack.isMethod ? '-2.5rem' : '-2.2rem'
     },
     scoreText () {
-      return this.stack.isMethod ? 'MethodStack' : 'Score'
+      return this.stack.isMethod ? 'InheritanceStack' : 'Score'
     }
   },
   created () {

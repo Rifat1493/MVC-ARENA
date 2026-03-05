@@ -64,7 +64,7 @@ class StandardGame extends Game {
     const repeat = this.getTypeCount(plays, 'REPEAT') * REPEAT_BONUS
     const variable = this.getTypeCount(plays, 'VARIABLE') * VAR_BONUS
     const safety = this.getSafetyCount(plays) * SAFETY_BONUS
-    const method = player.playField.method.isComplete() ? METHOD_BONUS : 0
+    const method = this.getMethodBonus(player)
     const clean = this.getCleanBonus(player)
     const defensive = this.getDefensiveBonus(player)
     const nested = this.getNestedBonus(player)
@@ -105,6 +105,18 @@ class StandardGame extends Game {
    */
   getSafetyCount (plays) {
     return plays.filter(p => isSafety(p.card.type)).length
+  }
+
+  /**
+   * Returns the bonus a player should get for completing method stacks.
+   * Each completed method stack awards METHOD_BONUS points.
+   * @param {Player} player - The player to check.
+   * @return {int} The total method bonus for the player.
+   */
+  getMethodBonus (player) {
+    return player.playField.lanes.reduce((acc, lane) => {
+      return acc + (lane.method.isComplete() ? METHOD_BONUS : 0)
+    }, 0)
   }
 
   /**

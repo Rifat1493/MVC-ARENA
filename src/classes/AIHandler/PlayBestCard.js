@@ -137,7 +137,7 @@ class PlayBestCard extends ActionHandler {
   /**
    * Make a playInfo object for an instruction card if it can be played.
    *
-   * Will only play on the method stack.
+   * Will attempt to play the card on any available method stack across all lanes.
    *
    * @param {Card} card - The card to attempt to play.
    * @param {Object} state - An object with the state info needed to make this decision.
@@ -148,13 +148,16 @@ class PlayBestCard extends ActionHandler {
   instruction (card, { player }) {
     if (player.hurtBy('STACK_OVERFLOW')) { return undefined }
 
-    if (player.playField.method.willAccept(card)) {
-      return {
-        type: 'playOnStack',
-        card: card,
-        cardOwner: player,
-        player: player,
-        stack: player.playField.method,
+    // Try to play on any lane's method stack
+    for (const lane of player.playField.lanes) {
+      if (lane.method.willAccept(card)) {
+        return {
+          type: 'playOnStack',
+          card: card,
+          cardOwner: player,
+          player: player,
+          stack: lane.method,
+        }
       }
     }
     return undefined
@@ -162,6 +165,8 @@ class PlayBestCard extends ActionHandler {
 
   /**
    * Make a playInfo object for an method card if it can be played.
+   *
+   * Selects the first lane with an incomplete method stack, or defaults to lane 0.
    *
    * @param {Card} card - The card to attempt to play.
    * @param {Object} state - An object with the state info needed to make this decision.
@@ -172,12 +177,22 @@ class PlayBestCard extends ActionHandler {
   method (card, { player }) {
     if (player.hurtBy('STACK_OVERFLOW')) { return undefined }
 
+    // Find first lane with incomplete method stack, or default to lane 0
+    let laneIndex = 0
+    for (let i = 0; i < player.playField.lanes.length; i++) {
+      if (!player.playField.lanes[i].method.isComplete()) {
+        laneIndex = i
+        break
+      }
+    }
+
     return {
       type: 'newStack',
       card: card,
       cardOwner: player,
       player: player,
-      playField: player.playField
+      playField: player.playField,
+      laneIndex: laneIndex
     }
   }
 

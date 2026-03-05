@@ -12,17 +12,23 @@
 
     <div class="lanes-container">
       <div
-        v-for="laneIndex in 3"
+        v-for="(lane, laneIndex) in player.playField.lanes"
         :key="laneIndex"
         class="lane"
+        @drop="onDropInLane($event, laneIndex)"
+        @dragover.prevent
+        @dragenter.prevent
       >
+        <div class="lane-title">
+          {{ laneNames[laneIndex] }}
+        </div>
         <div class="method">
-          <card-stack :stack="player.playField.method" />
+          <card-stack :stack="lane.method" />
         </div>
 
         <ul class="stack-list">
           <li
-            v-for="stack in getLaneStacks(laneIndex - 1)"
+            v-for="stack in lane.stacks"
             :key="stack.id"
             class="card-stack"
           >
@@ -60,6 +66,11 @@ export default {
    'play-field-info': PlayFieldInfo
   },
   props: ['player'],
+  data () {
+    return {
+      laneNames: ['Model', 'View', 'Controller']
+    }
+  },
   computed: {
     ...mapGetters(['game']),
     isCurrentPlayer () {
@@ -68,19 +79,39 @@ export default {
   },
   methods: {
     /**
-     * Returns the stacks that belong in the given lane index (0, 1, or 2).
-     * Stacks are distributed round-robin across the 3 lanes.
-     * @param {int} laneIndex - The 0-based lane index.
-     * @return {Stack[]} The stacks for that lane.
-     */
-    getLaneStacks (laneIndex) {
-      return this.player.playField.stacks.filter((_, i) => i % 3 === laneIndex)
-    },
-    /**
-     * Handles a given event when a card is dropped in the playField.
+     * Handles a given event when a card is dropped in a specific lane.
      *
      * Only adds new stacks for valid cards `instruction` and `method` when the
-     * player is the current player.
+     * player is the current player. The stack will be added to the specified lane.
+     *
+     * @param {event} event - The event to handle. Must have the `dataTransfer`
+     * properties `cardId` and `playerId`.
+     * @param {int} laneIndex - The index of the lane where the card was dropped.
+     */
+    onDropInLane (event, laneIndex) {
+      const id = event.dataTransfer.getData('playerId')
+      const owner = this.game.getPlayer(id)
+      const cardId = event.dataTransfer.getData('cardId')
+      const card = owner.hand.getCardById(cardId)
+      event.preventDefault()
+
+      if (this.isCurrentPlayer && isBase(card.type)) {
+        event.stopPropagation();
+        this.game.takeTurn({
+          type: "newStack",
+          player: this.game.currentPlayer(),
+          card: card,
+          cardOwner: owner,
+          playField: this.player.playField,
+          laneIndex: laneIndex
+        })
+      }
+    },
+    /**
+     * Handles a given event when a card is dropped in the playField (fallback).
+     *
+     * Only adds new stacks for valid cards `instruction` and `method` when the
+     * player is the current player. Defaults to lane 0 for backward compatibility.
      *
      * @param {event} event - The event to handle. Must have the `dataTransfer`
      * properties `cardId` and `playerId`.
@@ -97,8 +128,10 @@ export default {
         this.game.takeTurn({
           type: "newStack",
           player: this.game.currentPlayer(),
-          card: card, cardOwner: owner,
-          playField: this.player.playField
+          card: card,
+          cardOwner: owner,
+          playField: this.player.playField,
+          laneIndex: 0
         })
       }
     }
@@ -147,6 +180,19 @@ export default {
 
 .lane:last-child {
   border-right: none;
+}
+
+/* ── Lane title ────────────────────────────────────────────── */
+.lane-title {
+  text-align: center;
+  font-weight: bold;
+  font-size: 0.85rem;
+  color: #fff;
+  letter-spacing: 0.05rem;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid #a0a0a0;
+  margin-bottom: 0.3rem;
+  flex-shrink: 0;
 }
 
 /* ── Method stack in each lane ──────────────────────────────── */

@@ -43,13 +43,13 @@ describe('Instruction class', () => {
 
     test('when instruction is played on a play field', () => {
       const playField = { player: 'player', addStack: jest.fn() }
-      const playInfo = { playField }
+      const playInfo = { playField, laneIndex: 0 }
 
       const card = new Instruction(2, mockDeck)
       card.play(playInfo)
 
       expect(Stack).toBeCalledWith(card, playField.player)
-      expect(playField.addStack).toBeCalledWith(Stack.mock.instances[0])
+      expect(playField.addStack).toBeCalledWith(Stack.mock.instances[0], 0)
     })
   })
 })

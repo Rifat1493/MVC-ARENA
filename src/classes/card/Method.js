@@ -20,11 +20,13 @@ class Method extends Card {
    * Method cards can only be used to create new stacks on a player's playField.
    * @param {Object} playInfo - Information about how the card was played.
    * @param {PlayField} playInfo.playField - The PlayField that the card was played on.
+   * @param {int} [playInfo.laneIndex=0] - The lane index to add the stack to.
    */
-  play ({ playField }) {
-    const wrapper = new MethodCardWrapper(this, playField.method)
+  play ({ playField, laneIndex = 0 }) {
+    const lane = playField.getLane(laneIndex)
+    const wrapper = new MethodCardWrapper(this, lane.method)
     const stack = new Stack(wrapper, playField.player)
-    playField.addStack(stack)
+    playField.addStack(stack, laneIndex)
   }
 }
 
