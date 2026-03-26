@@ -10,8 +10,12 @@
       id="game-setup"
       class="centered"
     >
-      <game-mode />
-      <select-level />
+      <!-- DEVELOPMENT: Game mode locked to Beginner + Malware1 Level -->
+      <div id="game-mode-display" class="setup-info">
+        <strong>Game Mode:</strong> Beginner - Malware 1<br>
+        <small>Antivirus, Spyware, and Ransom</small>
+      </div>
+
       <!-- DEVELOPMENT: Player selection commented out - using auto-populated players -->
       <!-- <add-players /> -->
       <div id="auto-setup-notice" class="setup-info">
@@ -42,8 +46,8 @@
 
 <script>
 import PageHeader from '@/components/shared/PageHeader'
-import GameMode from '@/components/setup/GameMode'
-import SelectLevel from '@/components/setup/SelectLevel'
+// import GameMode from '@/components/setup/GameMode' // DEVELOPMENT: Removed - locked to Beginner mode
+// import SelectLevel from '@/components/setup/SelectLevel' // DEVELOPMENT: Removed - locked to Malware1 level
 // import AddPlayers from '@/components/setup/AddPlayers' // DEVELOPMENT: Commented out
 import { mapActions, mapGetters } from 'vuex'
 
@@ -53,9 +57,9 @@ import { mapActions, mapGetters } from 'vuex'
 export default {
   name: 'HomePage',
   components: {
-    'page-header': PageHeader,
-    'game-mode': GameMode,
-    'select-level': SelectLevel
+    'page-header': PageHeader
+    // 'game-mode': GameMode // DEVELOPMENT: Removed
+    // 'select-level': SelectLevel // DEVELOPMENT: Removed
     // 'add-players': AddPlayers // DEVELOPMENT: Commented out
   },
   computed: {
@@ -70,25 +74,17 @@ export default {
   },
   methods: {
     ...mapActions([
-      'startBeginnerGame',
-      'startStandardGame'
+      'startBeginnerGame'
+      // 'startStandardGame' // DEVELOPMENT: Removed - locked to beginner only
     ]),
     /**
-     * Starts a new game using the information from the home page state.
-     *
-     * This is where new game modes will need to be added with their
-     * appropriate actions for routing to their specific game page with
-     * the appropriate game state.
+     * Starts a beginner game using the information from the home page state.
+     * DEVELOPMENT: Locked to Beginner + Malware1 only
      */
     playGame () {
       if (this.home.canStart()) {
-        if (this.home.mode === 'beginner') {
-          this.startBeginnerGame({
-            players: this.home.createPlayers(), level: this.home.level })
-        } else {
-          this.startStandardGame({
-            players: this.home.createPlayers(), level: this.home.level })
-        }
+        this.startBeginnerGame({
+          players: this.home.createPlayers(), level: this.home.level })
       }
     }
   }

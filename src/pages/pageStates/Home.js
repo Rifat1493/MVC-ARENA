@@ -1,26 +1,11 @@
 import Player from '@/classes/player/Player'
 import AIPlayer from '@/classes/player/AIPlayer'
 import deckData from '@/classes/deck/deckData'
-import { bus } from '@/components/shared/Bus'
-
-// Information for creating computer opponents
-// could change to just be names and set personality based on the
-// level instead. That way we could adjust difficulty beyond the cards
-// or at least taylor the personality to the cards being used.
-const botInfo = {
-  beginner: [
-    {name: 'n00b_b0t', personality: 'beginner'},
-    {name: ';;TLDR;;', personality: 'beginner'},
-  ],
-  standard: [
-    {name: 'L33T_g3Ars', personality: 'standard'},
-    {name: 'RoboVaC', personality: 'defensive'},
-    {name: 'BlueScr33n', personality: 'aggresive'}
-  ]
-}
+// import { bus } from '@/components/shared/Bus' // DEVELOPMENT: Removed - no mode switching
 
 /**
  * Home page state for setting up the information needed to start a game.
+ * DEVELOPMENT: Simplified to beginner mode with malware1 level only.
  *
  * @prop {Object[]} players - Information for players to add to the game.
  * ```
@@ -30,19 +15,14 @@ const botInfo = {
  *   personality // The personality to use when creating an AIHandler
  * }
  * ```
- * @prop {string} [mode='beginner'] - The current game mode, for now
- * `beginner` or `standard`.
- * @prop {string} [message=''] - A message to display when a user does something
- * they shouldn't or they need to be given infomation on an action.
- * @prop {Object} level - Info on the level to use when building the deck. See
- * {@link deckData} for more info on what this object will look like.
+ * @prop {Object} level - Info on the level to use when building the deck.
  */
 class Home {
   constructor () {
     this.players = []
-    this.mode = 'beginner'
     this.message = ''
-    this.level = deckData[this.mode].levels[0]
+    // Lock to malware1 level for beginner mode
+    this.level = deckData.beginner.levels[0] // malware1
     // DEVELOPMENT: Auto-populate players to skip setup
     this.autoPopulatePlayers()
   }
@@ -54,30 +34,6 @@ class Home {
   autoPopulatePlayers () {
     this.addPlayer('Player1', false, 'none')
     this.addBot()
-  }
-
-  /**
-   * Changes to the given mode and adjusts the player list if needed.
-   *
-   * Emits the `change-mode` event to indicate that the mode was changed.
-   * @param {string} newMode - The new mode to use. Caller is responsible for
-   * making sure the mode is valid.
-   */
-  changeMode (newMode) {
-    if (newMode === 'beginner' && this.players.length > 2) {
-      this.players.splice(2)
-    }
-    this.mode = newMode
-    this.level = deckData[this.mode].levels[0]
-    bus.emit('change-mode', this.mode)
-  }
-
-  /**
-   * Returns a list of levels for the current mode.
-   * @return {Object[]} A list of levels for current mode.
-   */
-  getLevels () {
-    return deckData[this.mode].levels
   }
 
   /**
@@ -116,20 +72,18 @@ class Home {
 
   /**
    * Adds a new bot to the player list.
-   *
-   * Gets names and personalities from an internal list based on the game mode.
+   * DEVELOPMENT: Simplified for beginner mode only.
    */
   addBot () {
-    for (let bot of botInfo[this.mode]) {
-      if (!this.nameInUse(bot.name)) {
-        this.addPlayer(bot.name, true, bot.personality)
-        return
-      }
+    // Simple bot name for beginner mode
+    const botName = 'n00b_b0t'
+    if (!this.nameInUse(botName)) {
+      this.addPlayer(botName, true, 'beginner')
+    } else {
+      // Fallback if default name is taken
+      let randomName = 'b0t_' + Math.floor(Math.random() * 10000)
+      this.addPlayer(randomName, true, 'beginner')
     }
-
-    // If somehow there are no AI names available
-    let botName = 'b0t_' + Math.floor(Math.random() * 10000)
-    this.addPlayer(botName, true, 'standard')
   }
 
   /**
@@ -226,10 +180,8 @@ class Home {
    */
   createPlayer (id, playerInfo) {
     if (playerInfo.isAI) {
-      if (this.mode === 'beginner') {
-        playerInfo.personality = 'beginner'
-      }
-      return new AIPlayer(id, playerInfo.name, playerInfo.personality)
+      // DEVELOPMENT: Always use beginner personality (only mode available)
+      return new AIPlayer(id, playerInfo.name, 'beginner')
     } else {
       return new Player(id, playerInfo.name)
     }

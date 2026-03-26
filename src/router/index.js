@@ -42,12 +42,6 @@ const routes = [
     component: () => import('@/pages/BeginnerGame.vue')
   },
   {
-    path: '/standard',
-    name: 'standardGame',
-    canReuse: false,
-    component: () => import('@/pages/StandardGame.vue')
-  },
-  {
     path: '/help',
     name: 'help',
     component: () => import('@/pages/Help.vue')
