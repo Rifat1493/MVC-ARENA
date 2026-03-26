@@ -43,6 +43,17 @@ class Home {
     this.mode = 'beginner'
     this.message = ''
     this.level = deckData[this.mode].levels[0]
+    // DEVELOPMENT: Auto-populate players to skip setup
+    this.autoPopulatePlayers()
+  }
+
+  /**
+   * Auto-populates default players for development/testing.
+   * Comment out this call in constructor to use manual player selection.
+   */
+  autoPopulatePlayers () {
+    this.addPlayer('Player1', false, 'none')
+    this.addBot()
   }
 
   /**

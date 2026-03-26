@@ -12,7 +12,12 @@
     >
       <game-mode />
       <select-level />
-      <add-players />
+      <!-- DEVELOPMENT: Player selection commented out - using auto-populated players -->
+      <!-- <add-players /> -->
+      <div id="auto-setup-notice" class="setup-info">
+        <strong>🚀 Quick Start Mode</strong><br>
+        Players: {{ home.players.length > 0 ? home.players.map(p => p.name).join(', ') : 'None' }}
+      </div>
 
       <div
         id="message"
@@ -20,13 +25,15 @@
       >
         {{ home.message }}
       </div>
+      <!-- DEVELOPMENT: Play button is optional - game auto-starts via mounted() hook -->
+      <!-- Comment out below button section if you want to hide it -->
       <button
         id="go"
         class="centered btn btn-success"
         :disabled="!home.hasEnoughPlayers()"
         @click="playGame()"
       >
-        Play
+        Play (Auto-Started)
       </button>
     </div>
   </div>
@@ -37,7 +44,7 @@
 import PageHeader from '@/components/shared/PageHeader'
 import GameMode from '@/components/setup/GameMode'
 import SelectLevel from '@/components/setup/SelectLevel'
-import AddPlayers from '@/components/setup/AddPlayers'
+// import AddPlayers from '@/components/setup/AddPlayers' // DEVELOPMENT: Commented out
 import { mapActions, mapGetters } from 'vuex'
 
 /**
@@ -48,11 +55,18 @@ export default {
   components: {
     'page-header': PageHeader,
     'game-mode': GameMode,
-    'select-level': SelectLevel,
-    'add-players': AddPlayers
+    'select-level': SelectLevel
+    // 'add-players': AddPlayers // DEVELOPMENT: Commented out
   },
   computed: {
     ...mapGetters(['home'])
+  },
+  mounted () {
+    // DEVELOPMENT: Auto-start game on page load
+    // Comment out this line to use manual Play button
+    this.$nextTick(() => {
+      this.playGame()
+    })
   },
   methods: {
     ...mapActions([
@@ -111,6 +125,19 @@ export default {
   display: inline-block;
   position: absolute;
   bottom: 2%;
+}
+
+.setup-info {
+  position: absolute;
+  top: 25%;
+  color: #333;
+  font-size: 14px;
+  padding: 1rem;
+  background-color: #f0f0f0;
+  border-radius: 5px;
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .centered {
