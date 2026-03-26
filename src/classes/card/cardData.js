@@ -2,10 +2,7 @@
  * Helper functions to make it easier to help check what catergories a card
  * type may fall into.
  *
- * i.e. `RANSOM` is `malware`, it is also an `attack` and `negative` effect. \
- * `SCAN` is a `safety` card, but it is **not** a `positive` effect. \
- * all `safety`, `malware`, `hack`, and `algorithm` cards are `special` cards
- * except for `VIRUS`.
+ * DEVELOPMENT: Simplified for INSTRUCTION, METHOD, RANSOM, and COMPONENT cards.
  *
  * Functions need to be imported like this `import { isHack } from`.
  *
@@ -13,28 +10,30 @@
  */
 
 // All malware card types
+// DEVELOPMENT: Only RANSOM
 const malware = [
-  "RANSOM", "SPYWARE", "VIRUS", "TROJAN"
+  "RANSOM"
 ]
 
 // All hack card types
+// DEVELOPMENT: Empty - no hack cards used
 const hack = [
-  "STACK_OVERFLOW", "STACK_UNDERFLOW", "SQL_INJECTION", "DDOS"
 ]
 
 // All safety card types
+// DEVELOPMENT: Empty - no safety cards used
 const safety = [
-  "ANTIVIRUS", "FIREWALL", "SCAN"
 ]
 
 // All algorithm card types
+// DEVELOPMENT: Empty - no algorithm cards used
 const algorithm = [
-  "SEARCH", "SORT", "REDRAW"
 ]
 
 // types that can start a stack
+// DEVELOPMENT: INSTRUCTION, METHOD, and COMPONENT cards
 const base = [
-  "INSTRUCTION", "METHOD"
+  "INSTRUCTION", "METHOD", "MODEL", "VIEW", "CONTROLLER"
 ]
 
 // all cards that are considered attacks
@@ -43,30 +42,34 @@ const attacks = [
 ]
 
 // all card types that use the NegativeEffectCard
+// DEVELOPMENT: Only RANSOM
 const negativeEffects = [
   ...malware.filter(m => m !== "VIRUS" && m !== "TROJAN"),
   ...hack
 ]
 
 // all card types that use the PositiveEffectCard
+// DEVELOPMENT: Empty - no safety cards
 const positiveEffects = [
   ...safety
 ]
 
 // Cards that will have an overlay to play them
+// DEVELOPMENT: Only RANSOM
 const special = [
   ...safety, ...algorithm, ...hack,
   ...malware.filter(m => m !== "VIRUS"),
 ]
 
 // Cards that can be played on a stack (when it has a base)
+// DEVELOPMENT: Empty - no stack cards
 const onStack = [
-  'REPEAT', 'VARIABLE', 'VIRUS'
 ]
 
 // Cards that can be played on the method stack
+// DEVELOPMENT: INSTRUCTION and COMPONENT cards (for point accumulation)
 const onMethod = [
-  'INSTRUCTION'
+  'INSTRUCTION', 'MODEL', 'VIEW', 'CONTROLLER'
 ]
 
 // Returns a function to find if a card type is in the given typeList

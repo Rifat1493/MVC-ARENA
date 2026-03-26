@@ -9,6 +9,7 @@ import NegativeEffectCard from '@/classes/card/NegativeEffectCard'
 import PositiveEffectCard from '@/classes/card/PositiveEffectCard'
 import Search from '@/classes/card/Search'
 import Sort from '@/classes/card/Sort'
+import ComponentCard from '@/classes/card/ComponentCard'
 import { isNegativeEffect, isPositiveEffect } from '@/classes/card/cardData'
 
 // Map of card types to their constructors for types that take
@@ -29,6 +30,9 @@ const needDeckOnly = {
   'SORT': Sort,
 }
 
+// Component card types that require a name
+const componentTypes = ['MODEL', 'VIEW', 'CONTROLLER']
+
 /**
  * Factory to cread new cards given a type, value, and deck.
  */
@@ -36,8 +40,7 @@ class CardFactory {
   /**
    * Creates a new card.
    * @param {string} type - The type of card to create.
-   * @param {int} value - The value of the card. For cards that do not use a
-   * value set this to 0.
+   * @param {int|string} value - The value of the card, or component name for component cards.
    * @param {Deck} deck - The deck the card is in.
    */
   newCard (type, value, deck) {
@@ -48,6 +51,9 @@ class CardFactory {
     } else if (type in needDeckOnly) {
       const constructor = needDeckOnly[type]
       card = new constructor(deck)
+    } else if (componentTypes.includes(type)) {
+      // For component cards, value is actually the component name
+      card = new ComponentCard(type, value, deck)
     } else if (isNegativeEffect(type)) {
       card = new NegativeEffectCard(type, deck)
     } else if (isPositiveEffect(type)) {
@@ -60,3 +66,4 @@ class CardFactory {
 }
 
 export default CardFactory;
+

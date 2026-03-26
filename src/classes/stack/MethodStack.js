@@ -1,4 +1,5 @@
 import Stack from '@/classes/stack/Stack'
+import { canPlayOnMethod } from '@/classes/card/cardData'
 
 // The maximum score allowed for a method
 const SCORE_LIMIT = 9
@@ -7,7 +8,7 @@ const SCORE_LIMIT = 9
 const CARD_LIMIT = 6
 
 /**
- * Class for a Method Stack that only accept `instruction` cards.
+ * Class for a Method Stack that accepts `instruction` and component cards (MODEL, VIEW, CONTROLLER).
  * @prop {int} adjustment - A number of points to adjust the total stack score by.
  * @extends Stack
  */
@@ -45,17 +46,17 @@ class MethodStack extends Stack {
   /**
    * Checks to see if the given card can be added to the top of the stack.
    *
-   * Only accepts `instruction` cards that will not put the total score over
-   * the max score of 9. Does **not** consider the adjustment in this calculation.
-   * So if the score is 9, but there is a -2 adjustment no cards will be accepted
-   * even though the total score is below the max. Also, will not accept more
-   * than 6 cards total.
+   * Accepts `instruction` and component cards (MODEL, VIEW, CONTROLLER) that will not
+   * put the total score over the max score of 9. Does **not** consider the adjustment
+   * in this calculation. So if the score is 9, but there is a -2 adjustment no cards
+   * will be accepted even though the total score is below the max. Also, will not
+   * accept more than 6 cards total.
    *
    * @return {bool} True if the card can be added to the top, false otherwise.
    */
   willAccept (card) {
     const total = card.getValue() + this.getScore()
-    return card.type === 'INSTRUCTION' && !this.isComplete()
+    return canPlayOnMethod(card.type) && !this.isComplete()
       && total <= SCORE_LIMIT + this.adjustment
   }
 

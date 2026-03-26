@@ -69,25 +69,37 @@ function makeType (type, val, num) {
 // Begginer Decks ////////////////////////////////////////////////////////////
 
 // Base cards to add to each beginner deck
+// DEVELOPMENT: Replaced INSTRUCTION with MODEL, VIEW, CONTROLLER component cards
 const beginnerBase = [
-  makeType('INSTRUCTION', 1, 8),
-  makeType('INSTRUCTION', 2, 14),
-  makeType('INSTRUCTION', 3, 6),
-  makeType('REPEAT', 1, 5),
-  makeType('REPEAT', 2, 5),
-  makeType('REPEAT', 3, 4),
-  makeType('VARIABLE', 4, 4),
-  makeType('VARIABLE', 5, 2),
-  makeType('METHOD', 0, 12),
-  makeType('SCAN', 0, 3),
-  makeType('SEARCH', 0, 2),
-  makeType('SORT', 0, 2)
+  // MODEL cards (6 types, 12 cards total)
+  makeType('MODEL', 'caching', 2),
+  makeType('MODEL', 'data_validation', 2),
+  makeType('MODEL', 'database', 3),
+  makeType('MODEL', 'file_storage_adapter', 2),
+  makeType('MODEL', 'orm', 2),
+  makeType('MODEL', 'secrets_manager', 1),
+
+  // VIEW cards (4 types, 8 cards total)
+  makeType('VIEW', 'cli_view', 2),
+  makeType('VIEW', 'input_validation', 2),
+  makeType('VIEW', 'mobile_view', 2),
+  makeType('VIEW', 'web_view', 2),
+
+  // CONTROLLER cards (6 types, 12 cards total)
+  makeType('CONTROLLER', 'Middleware', 2),
+  makeType('CONTROLLER', 'Routing', 2),
+  makeType('CONTROLLER', 'authentication', 2),
+  makeType('CONTROLLER', 'authorization', 2),
+  makeType('CONTROLLER', 'csrf_protection', 2),
+  makeType('CONTROLLER', 'rate_limiting', 2),
+
+  // METHOD cards
+  makeType('METHOD', 0, 12)
 ]
 
+// DEVELOPMENT: Simplified to only RANSOM card
 const b1Special = [
-  makeType('SPYWARE', 0, 3),
-  makeType('RANSOM', 0, 3),
-  makeType('ANTIVIRUS', 0, 1)
+  makeType('RANSOM', 0, 3)
 ]
 
 // Full deck objects containing lists of base and extra cards
@@ -99,12 +111,12 @@ const malware1 = {
 // Default deck for beginner mode
 const beginnerDefault = malware1
 
-// List of level descriptions - DEVELOPMENT: Only malware1 level
+// List of level descriptions - DEVELOPMENT: Component cards (MODEL, VIEW, CONTROLLER), METHOD, and RANSOM
 const beginnerLevels = [
   {
     id: 'malware1',
     name: 'Malware 1',
-    description: 'Antivirus, Spyware, and Ransom'
+    description: 'MVC Components, Method, and Ransom'
   }
 ]
 

@@ -104,7 +104,10 @@ class Game {
    */
   drawCards (player) {
     for (let i = player.hand.numCards(); i < player.hand.maxCards; i++) {
-      player.hand.addCard(this.drawCard(player))
+      const card = this.drawCard(player)
+      if (card !== undefined) {
+        player.hand.addCard(card)
+      }
     }
   }
 
