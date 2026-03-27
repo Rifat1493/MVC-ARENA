@@ -15,9 +15,10 @@ const malware = [
   "RANSOM"
 ]
 
-// All hack card types
-// DEVELOPMENT: Empty - no hack cards used
+// All hack card types (attacking cards that can be played anywhere)
+// DEVELOPMENT: CSRF, DOS, MALWARE, SQL_INJECTION, UNAUTHORIZED_ACCESS, XSS
 const hack = [
+  "CSRF", "DOS", "MALWARE", "SQL_INJECTION", "UNAUTHORIZED_ACCESS", "XSS"
 ]
 
 // All safety card types

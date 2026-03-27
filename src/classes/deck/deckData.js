@@ -97,9 +97,15 @@ const beginnerBase = [
   makeType('METHOD', 0, 12)
 ]
 
-// DEVELOPMENT: Simplified to only RANSOM card
+// DEVELOPMENT: Simplified to include all attacking cards
 const b1Special = [
-  makeType('RANSOM', 0, 3)
+  makeType('RANSOM', 0, 3),
+  makeType('CSRF', 0, 2),
+  makeType('DOS', 0, 2),
+  makeType('MALWARE', 0, 2),
+  makeType('SQL_INJECTION', 0, 2),
+  makeType('UNAUTHORIZED_ACCESS', 0, 2),
+  makeType('XSS', 0, 2)
 ]
 
 // Full deck objects containing lists of base and extra cards

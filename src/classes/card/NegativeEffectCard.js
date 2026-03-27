@@ -14,7 +14,7 @@ class NegativeEffectCard extends Card {
    * @param {Deck} deck - The deck the card is in.
    */
   constructor (type, deck) {
-    super(0, type, deck, Card.imgPath(type.toLowerCase()))
+    super(0, type, deck, 'static/cardImages/attack/' + type.toLowerCase() + '.png')
   }
 
   /**
