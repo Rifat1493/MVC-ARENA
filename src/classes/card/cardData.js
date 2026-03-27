@@ -31,6 +31,11 @@ const safety = [
 const algorithm = [
 ]
 
+// Defensive cards that act like repeat multipliers on stacks
+const defensiveMultipliers = [
+  'INTERFACE', 'POLYMORPHISM', 'GIT', 'ERROR_HANDLING'
+]
+
 // types that can start a stack
 // DEVELOPMENT: INSTRUCTION, METHOD, and COMPONENT cards
 const base = [
@@ -63,8 +68,9 @@ const special = [
 ]
 
 // Cards that can be played on a stack (when it has a base)
-// DEVELOPMENT: Empty - no stack cards
+// DEVELOPMENT: Defensive multiplier cards
 const onStack = [
+  ...defensiveMultipliers
 ]
 
 // Cards that can be played on the method stack
@@ -180,6 +186,15 @@ const canPlayOnStack = _isType(onStack)
  */
 const canPlayOnMethod = _isType(onMethod)
 
+/**
+ * Checks if a type is a repeat-like stack multiplier.
+ *
+ * @param {string} type - The type to check.
+ * @returns {bool} True if the type is repeat-like.
+ * @function
+ */
+const isRepeatLike = _isType(['REPEAT', ...defensiveMultipliers])
+
 export {
   isMalware,
   isHack,
@@ -191,5 +206,6 @@ export {
   isSpecial,
   isBase,
   canPlayOnStack,
-  canPlayOnMethod
+  canPlayOnMethod,
+  isRepeatLike
 }

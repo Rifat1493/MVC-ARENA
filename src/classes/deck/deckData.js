@@ -105,7 +105,13 @@ const b1Special = [
   makeType('MALWARE', 0, 2),
   makeType('SQL_INJECTION', 0, 2),
   makeType('UNAUTHORIZED_ACCESS', 0, 2),
-  makeType('XSS', 0, 2)
+  makeType('XSS', 0, 2),
+
+  // Defensive multiplier cards (double a stack)
+  makeType('INTERFACE', 2, 2),
+  makeType('POLYMORPHISM', 2, 2),
+  makeType('GIT', 2, 2),
+  makeType('ERROR_HANDLING', 2, 2)
 ]
 
 // Full deck objects containing lists of base and extra cards
@@ -122,7 +128,7 @@ const beginnerLevels = [
   {
     id: 'malware1',
     name: 'Malware 1',
-    description: 'MVC Components, Method, and Ransom'
+    description: 'MVC Components, Method, Ransom, and Defensive Multipliers'
   }
 ]
 

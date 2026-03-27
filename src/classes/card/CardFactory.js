@@ -10,6 +10,7 @@ import PositiveEffectCard from '@/classes/card/PositiveEffectCard'
 import Search from '@/classes/card/Search'
 import Sort from '@/classes/card/Sort'
 import ComponentCard from '@/classes/card/ComponentCard'
+import DefensiveMultiplier from '@/classes/card/DefensiveMultiplier'
 import { isNegativeEffect, isPositiveEffect } from '@/classes/card/cardData'
 
 // Map of card types to their constructors for types that take
@@ -29,6 +30,9 @@ const needDeckOnly = {
   'SEARCH': Search,
   'SORT': Sort,
 }
+
+// Defensive multiplier card types that need a type and a deck
+const defensiveMultiplierTypes = ['INTERFACE', 'POLYMORPHISM', 'GIT', 'ERROR_HANDLING']
 
 // Component card types that require a name
 const componentTypes = ['MODEL', 'VIEW', 'CONTROLLER']
@@ -54,6 +58,8 @@ class CardFactory {
     } else if (componentTypes.includes(type)) {
       // For component cards, value is actually the component name
       card = new ComponentCard(type, value, deck)
+    } else if (defensiveMultiplierTypes.includes(type)) {
+      card = new DefensiveMultiplier(type, deck)
     } else if (isNegativeEffect(type)) {
       card = new NegativeEffectCard(type, deck)
     } else if (isPositiveEffect(type)) {
