@@ -8,19 +8,38 @@ const SCORE_LIMIT = 9
 const CARD_LIMIT = 6
 
 /**
- * Class for a Method Stack that accepts `instruction` and component cards (MODEL, VIEW, CONTROLLER).
+ * Class for a Method Stack that accepts component cards based on lane.
+ * - Lane 0 (Model): Only MODEL cards
+ * - Lane 1 (View): Only VIEW cards
+ * - Lane 2 (Controller): Only CONTROLLER cards
  * @prop {int} adjustment - A number of points to adjust the total stack score by.
+ * @prop {int} laneIndex - The lane index this method stack belongs to (0, 1, or 2).
  * @extends Stack
  */
 class MethodStack extends Stack {
   /**
    * Creates a new MethodStack.
    * @param {Player} player - The player that owns the Stack.
+   * @param {int} laneIndex - The lane index (0=Model, 1=View, 2=Controller).
    */
-  constructor (player) {
+  constructor (player, laneIndex = 0) {
     super(null, player)
     this.isMethod = true
     this.adjustment = 0
+    this.laneIndex = laneIndex
+  }
+
+  /**
+   * Get the component type that this method stack accepts based on lane.
+   * @return {string} The component type ('MODEL', 'VIEW', or 'CONTROLLER').
+   */
+  getAcceptedComponentType () {
+    switch (this.laneIndex) {
+      case 0: return 'MODEL'
+      case 1: return 'VIEW'
+      case 2: return 'CONTROLLER'
+      default: return 'MODEL'
+    }
   }
 
   /**
@@ -46,17 +65,21 @@ class MethodStack extends Stack {
   /**
    * Checks to see if the given card can be added to the top of the stack.
    *
-   * Accepts `instruction` and component cards (MODEL, VIEW, CONTROLLER) that will not
-   * put the total score over the max score of 9. Does **not** consider the adjustment
-   * in this calculation. So if the score is 9, but there is a -2 adjustment no cards
-   * will be accepted even though the total score is below the max. Also, will not
-   * accept more than 6 cards total.
+   * Only accepts component cards that match the lane type:
+   * - Lane 0 (Model): Accepts MODEL cards
+   * - Lane 1 (View): Accepts VIEW cards
+   * - Lane 2 (Controller): Accepts CONTROLLER cards
+   *
+   * Cards must not put the total score over 9 and max 6 cards total.
    *
    * @return {bool} True if the card can be added to the top, false otherwise.
    */
   willAccept (card) {
     const total = card.getValue() + this.getScore()
-    return canPlayOnMethod(card.type) && !this.isComplete()
+    const expectedType = this.getAcceptedComponentType()
+
+    return card.type === expectedType
+      && !this.isComplete()
       && total <= SCORE_LIMIT + this.adjustment
   }
 

@@ -17,7 +17,7 @@ class Lane {
   constructor (player, laneIndex) {
     this.player = player
     this.laneIndex = laneIndex
-    this.method = new MethodStack(player)
+    this.method = new MethodStack(player, laneIndex)
     this.stacks = []
   }
 
