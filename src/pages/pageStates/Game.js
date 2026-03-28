@@ -221,6 +221,9 @@ class Game {
     } else if (playInfo.replaced) {
       bus.emit('mimic-played')
     }
+    if (playInfo.blockedBy) {
+      bus.emit('attack-blocked', playInfo.blockedBy)
+    }
     bus.emit('card-played', playInfo)
   }
 

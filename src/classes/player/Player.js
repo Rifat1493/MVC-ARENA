@@ -1,7 +1,7 @@
 import Hand from '@/classes/player/Hand'
 import PlayField from '@/classes/stack/PlayField'
 import StatusEffects from '@/classes/statusEffect/StatusEffects'
-import { isAttack, isAlgorithm, isSpecial } from '@/classes/card/cardData'
+import { isAttack, isAlgorithm, isSpecial, getAttackCounters } from '@/classes/card/cardData'
 
 /**
  * Class for a player.
@@ -67,6 +67,22 @@ class Player {
    */
   protectedFrom (effectType) {
     return this.effects.hasProtectionFrom(effectType)
+  }
+
+  /**
+   * Finds a defense card that can counter the given attack type.
+   * Chooses randomly if multiple matches exist.
+   * @param {string} attackType - The attack type to check.
+   * @return {{card: Card, stack: Stack}|null} The defense card and stack, if any.
+   */
+  getDefenseCardForAttack (attackType) {
+    const counters = getAttackCounters(attackType)
+    const matches = this.playField.findDefenseCards(counters.components, counters.types)
+    if (!matches.length) {
+      return null
+    }
+    const idx = Math.floor(Math.random() * matches.length)
+    return matches[idx]
   }
 
   /**

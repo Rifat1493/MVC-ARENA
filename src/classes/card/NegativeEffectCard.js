@@ -33,6 +33,23 @@ class NegativeEffectCard extends Card {
    * used if the card is a replacement created by a mimicked card.
    */
   play (playInfo) {
+    const defenseMatch = playInfo.target.getDefenseCardForAttack(this.type)
+    if (defenseMatch) {
+      const defenseCard = defenseMatch.card
+      const defenseStack = defenseMatch.stack
+      playInfo.blockedBy = {
+        attackImage: this.image,
+        defenseImage: defenseCard.image,
+        message: `${this._displayName(defenseCard)} encountered ${this._displayName(this)}`
+      }
+      if (defenseStack) {
+        defenseStack.cards = defenseStack.cards.filter(c => c !== defenseCard)
+        defenseCard.discard()
+      }
+      this.discard()
+      return
+    }
+
     if (!playInfo.target.hurtBy(this.type)
         && !playInfo.target.protectedFrom(this.type)) {
       if (playInfo.target.helpedBy('SCAN')) {
@@ -48,6 +65,39 @@ class NegativeEffectCard extends Card {
     } else {
       this.discard()
     }
+  }
+
+  /**
+   * Builds a display name for a card or component card.
+   * @param {Card} card - The card to describe.
+   * @return {string} The display name.
+   * @private
+   */
+  _displayName (card) {
+    if (card.componentName) {
+      return this._titleize(card.componentName)
+    }
+    if (card.type === 'SQL_INJECTION') { return 'SQL Injection' }
+    if (card.type === 'UNAUTHORIZED_ACCESS') { return 'Unauthorized Access' }
+    if (card.type === 'XSS' || card.type === 'CSRF' || card.type === 'DOS') {
+      return card.type
+    }
+    if (card.type === 'GIT') { return 'Git' }
+    return this._titleize(card.type)
+  }
+
+  /**
+   * Turns a constant-style name into Title Case.
+   * @param {string} value - The value to titleize.
+   * @return {string} Title-cased string.
+   * @private
+   */
+  _titleize (value) {
+    return value
+      .toLowerCase()
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
   }
 }
 

@@ -36,6 +36,38 @@ const defensiveMultipliers = [
   'INTERFACE', 'POLYMORPHISM', 'GIT', 'ERROR_HANDLING'
 ]
 
+// Attack counters based on component cards or special defense types
+const attackCounters = {
+  DOS: {
+    components: ['rate_limiting', 'caching', 'input_validation'],
+    types: []
+  },
+  SQL_INJECTION: {
+    components: ['orm'],
+    types: []
+  },
+  XSS: {
+    components: ['data_validation'],
+    types: []
+  },
+  CSRF: {
+    components: ['csrf_protection'],
+    types: []
+  },
+  RANSOM: {
+    components: ['secrets_manager'],
+    types: ['GIT']
+  },
+  MALWARE: {
+    components: ['file_storage_adapter'],
+    types: []
+  },
+  UNAUTHORIZED_ACCESS: {
+    components: ['authentication', 'authorization'],
+    types: []
+  }
+}
+
 // types that can start a stack
 // DEVELOPMENT: INSTRUCTION, METHOD, and COMPONENT cards
 const base = [
@@ -195,6 +227,24 @@ const canPlayOnMethod = _isType(onMethod)
  */
 const isRepeatLike = _isType(['REPEAT', ...defensiveMultipliers])
 
+/**
+ * Returns the defense counters for a given attack type.
+ *
+ * @param {string} attackType - The attack type to check.
+ * @returns {{components: string[], types: string[]}} The defense counters.
+ * @function
+ */
+function getAttackCounters (attackType) {
+  const counters = attackCounters[attackType]
+  if (!counters) {
+    return { components: [], types: [] }
+  }
+  return {
+    components: counters.components || [],
+    types: counters.types || []
+  }
+}
+
 export {
   isMalware,
   isHack,
@@ -207,5 +257,6 @@ export {
   isBase,
   canPlayOnStack,
   canPlayOnMethod,
-  isRepeatLike
+  isRepeatLike,
+  getAttackCounters
 }

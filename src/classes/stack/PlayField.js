@@ -123,6 +123,27 @@ class PlayField {
   getAllStacks () {
     return this.lanes.flatMap(lane => lane.getAllStacks())
   }
+
+  /**
+   * Finds all defense cards in any stack by component name or card type.
+   * @param {string[]} componentNames - Component names to look for.
+   * @param {string[]} cardTypes - Card types to look for.
+  * @return {{card: Card, stack: Stack}[]} Matches for defense cards.
+   */
+  findDefenseCards (componentNames = [], cardTypes = []) {
+    const matches = []
+    const stacks = this.getAllStacks()
+    for (const stack of stacks) {
+      for (const card of stack.cards) {
+        if (card.componentName && componentNames.includes(card.componentName)) {
+          matches.push({ card, stack })
+        } else if (cardTypes.includes(card.type)) {
+          matches.push({ card, stack })
+        }
+      }
+    }
+    return matches
+  }
 }
 
 export default PlayField;
