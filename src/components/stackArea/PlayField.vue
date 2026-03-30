@@ -1,7 +1,7 @@
 <template>
   <div
     id="play-field"
-    :class="{ play: isCurrentPlayer }"
+    :class="{ play: isCurrentPlayer, blocked: isBlocked }"
     @drop="onDrop"
     @dragover.prevent
     @dragenter.prevent
@@ -75,6 +75,9 @@ export default {
     ...mapGetters(['game']),
     isCurrentPlayer () {
       return this.game.currentPlayer() === this.player
+    },
+    isBlocked () {
+      return this.player.hurtBy('BUG') || this.player.hurtBy('DISASTER')
     }
   },
   methods: {
@@ -229,6 +232,11 @@ export default {
   -webkit-box-shadow: 0 0 0.7rem 0.7rem rgba(0,255,0,1);
   -moz-box-shadow: 0 0 0.7rem 0.7rem rgba(0,255,0,1);
   box-shadow: 0 0 0.7rem 0.7rem rgba(0,255,0,1);
+}
+
+.blocked {
+  border-color: #ff2d2d;
+  box-shadow: 0 0 1.4rem 0.9rem rgba(255, 45, 45, 0.75);
 }
 </style>
 

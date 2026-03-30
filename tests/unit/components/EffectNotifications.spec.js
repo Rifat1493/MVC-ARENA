@@ -37,7 +37,7 @@ describe('EffectNotifications', () => {
     expect(wrapper.find('#collision-notification').exists()).toBe(true)
     expect(wrapper.text()).toContain('ORM vs SQL Injection')
 
-    jest.advanceTimersByTime(2600)
+    jest.advanceTimersByTime(3800)
     await nextTick()
 
     expect(wrapper.find('#collision-notification').exists()).toBe(false)

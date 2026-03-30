@@ -16,7 +16,7 @@ class BeginnerGame extends Game {
   constructor (players, level) {
     super(players)
     this.deck = new DeckFactory().beginnerDeck(level.id)
-    this.scoreLimit = 50
+    this.scoreLimit = 25
     this.refreshHands()
   }
 }

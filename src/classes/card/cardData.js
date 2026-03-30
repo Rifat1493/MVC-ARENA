@@ -33,7 +33,7 @@ const algorithm = [
 
 // Defensive cards that act like repeat multipliers on stacks
 const defensiveMultipliers = [
-  'INTERFACE', 'POLYMORPHISM', 'GIT', 'ERROR_HANDLING'
+  'INTERFACE', 'POLYMORPHISM', 'GIT', 'ERROR_HANDLING', 'LOGGER'
 ]
 
 // Attack counters based on component cards or special defense types
@@ -65,6 +65,14 @@ const attackCounters = {
   UNAUTHORIZED_ACCESS: {
     components: ['authentication', 'authorization'],
     types: []
+  },
+  BUG: {
+    components: [],
+    types: ['LOGGER']
+  },
+  DISASTER: {
+    components: [],
+    types: ['GIT']
   }
 }
 

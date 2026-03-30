@@ -111,7 +111,14 @@ const b1Special = [
   makeType('INTERFACE', 2, 2),
   makeType('POLYMORPHISM', 2, 2),
   makeType('GIT', 2, 2),
-  makeType('ERROR_HANDLING', 2, 2)
+  makeType('ERROR_HANDLING', 2, 2),
+
+  // Defensive multiplier cards
+  makeType('LOGGER', 2, 2),
+
+  // Hazard cards (appear at most once each)
+  makeType('BUG', 0, 1),
+  makeType('DISASTER', 0, 1)
 ]
 
 // Full deck objects containing lists of base and extra cards

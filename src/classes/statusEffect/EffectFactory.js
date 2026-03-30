@@ -19,7 +19,7 @@ const bonuses = {
 // spyware adds +1 as it updates once before you can use its effect
 const turns = {
   'SPYWARE': 6, 'STACK_OVERFLOW': 2, 'STACK_UNDERFLOW': 2, 'DDOS': 3,
-  'REDRAW_CD': 3
+  'REDRAW_CD': 3, 'BUG': 2, 'DISASTER': 2
 }
 
 /**

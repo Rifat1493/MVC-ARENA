@@ -1,7 +1,7 @@
 <template>
   <div id="header">
     <h4 id="title">
-      Program Wars
+      MVC-ARENA
     </h4>
 
     <h3 id="heading">

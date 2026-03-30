@@ -11,6 +11,9 @@ import Search from '@/classes/card/Search'
 import Sort from '@/classes/card/Sort'
 import ComponentCard from '@/classes/card/ComponentCard'
 import DefensiveMultiplier from '@/classes/card/DefensiveMultiplier'
+import Logger from '@/classes/card/Logger'
+import Bug from '@/classes/card/Bug'
+import Disaster from '@/classes/card/Disaster'
 import { isNegativeEffect, isPositiveEffect } from '@/classes/card/cardData'
 
 // Map of card types to their constructors for types that take
@@ -29,6 +32,9 @@ const needDeckOnly = {
   'TROJAN': Trojan,
   'SEARCH': Search,
   'SORT': Sort,
+  'LOGGER': Logger,
+  'BUG': Bug,
+  'DISASTER': Disaster,
 }
 
 // Defensive multiplier card types that need a type and a deck
