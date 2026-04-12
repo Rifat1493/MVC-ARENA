@@ -2,7 +2,7 @@
   <div id="home-page">
     <page-header>
       <template #pageHeading>
-        Welcome to MVC-ARENA!
+        Welcome to Program Wars!
       </template>
     </page-header>
 
@@ -10,7 +10,18 @@
       id="game-setup"
       class="centered"
     >
-      <add-players />
+      <!-- DEVELOPMENT: Game mode locked to Beginner + Malware1 Level -->
+      <div id="game-mode-display" class="setup-info">
+        <strong>Game Mode:</strong> Beginner - Malware 1<br>
+        <small>Antivirus, Spyware, and Ransom</small>
+      </div>
+
+      <!-- DEVELOPMENT: Player selection commented out - using auto-populated players -->
+      <!-- <add-players /> -->
+      <div id="auto-setup-notice" class="setup-info">
+        <strong>🚀 Quick Start Mode</strong><br>
+        Players: {{ home.players.length > 0 ? home.players.map(p => p.name).join(', ') : 'None' }}
+      </div>
 
       <div
         id="message"
@@ -18,22 +29,26 @@
       >
         {{ home.message }}
       </div>
-
+      <!-- DEVELOPMENT: Play button is optional - game auto-starts via mounted() hook -->
+      <!-- Comment out below button section if you want to hide it -->
       <button
         id="go"
         class="centered btn btn-success"
-        :disabled="!home.canStart()"
+        :disabled="!home.hasEnoughPlayers()"
         @click="playGame()"
       >
-        Play
+        Play (Auto-Started)
       </button>
     </div>
   </div>
 </template>
 
+
 <script>
 import PageHeader from '@/components/shared/PageHeader'
-import AddPlayers from '@/components/setup/AddPlayers'
+// import GameMode from '@/components/setup/GameMode' // DEVELOPMENT: Removed - locked to Beginner mode
+// import SelectLevel from '@/components/setup/SelectLevel' // DEVELOPMENT: Removed - locked to Malware1 level
+// import AddPlayers from '@/components/setup/AddPlayers' // DEVELOPMENT: Commented out
 import { mapActions, mapGetters } from 'vuex'
 
 /**
@@ -42,18 +57,29 @@ import { mapActions, mapGetters } from 'vuex'
 export default {
   name: 'HomePage',
   components: {
-    'page-header': PageHeader,
-    'add-players': AddPlayers
+    'page-header': PageHeader
+    // 'game-mode': GameMode // DEVELOPMENT: Removed
+    // 'select-level': SelectLevel // DEVELOPMENT: Removed
+    // 'add-players': AddPlayers // DEVELOPMENT: Commented out
   },
   computed: {
     ...mapGetters(['home'])
   },
+  mounted () {
+    // DEVELOPMENT: Auto-start game on page load
+    // Comment out this line to use manual Play button
+    this.$nextTick(() => {
+      this.playGame()
+    })
+  },
   methods: {
     ...mapActions([
       'startBeginnerGame'
+      // 'startStandardGame' // DEVELOPMENT: Removed - locked to beginner only
     ]),
     /**
      * Starts a beginner game using the information from the home page state.
+     * DEVELOPMENT: Locked to Beginner + Malware1 only
      */
     playGame () {
       if (this.home.canStart()) {
@@ -64,6 +90,7 @@ export default {
   }
 }
 </script>
+
 
 <style scoped>
 #home-page {
@@ -94,6 +121,19 @@ export default {
   display: inline-block;
   position: absolute;
   bottom: 2%;
+}
+
+.setup-info {
+  position: absolute;
+  top: 25%;
+  color: #333;
+  font-size: 14px;
+  padding: 1rem;
+  background-color: #f0f0f0;
+  border-radius: 5px;
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .centered {

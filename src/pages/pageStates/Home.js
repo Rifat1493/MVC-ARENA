@@ -1,9 +1,11 @@
 import Player from '@/classes/player/Player'
 import AIPlayer from '@/classes/player/AIPlayer'
 import deckData from '@/classes/deck/deckData'
+// import { bus } from '@/components/shared/Bus' // DEVELOPMENT: Removed - no mode switching
 
 /**
  * Home page state for setting up the information needed to start a game.
+ * DEVELOPMENT: Simplified to beginner mode with malware1 level only.
  *
  * @prop {Object[]} players - Information for players to add to the game.
  * ```
@@ -19,7 +21,19 @@ class Home {
   constructor () {
     this.players = []
     this.message = ''
-    this.level = deckData.beginner.levels[0]
+    // Lock to malware1 level for beginner mode
+    this.level = deckData.beginner.levels[0] // malware1
+    // DEVELOPMENT: Auto-populate players to skip setup
+    this.autoPopulatePlayers()
+  }
+
+  /**
+   * Auto-populates default players for development/testing.
+   * Comment out this call in constructor to use manual player selection.
+   */
+  autoPopulatePlayers () {
+    this.addPlayer('Player1', false, 'none')
+    this.addBot()
   }
 
   /**
@@ -58,12 +72,15 @@ class Home {
 
   /**
    * Adds a new bot to the player list.
+   * DEVELOPMENT: Simplified for beginner mode only.
    */
   addBot () {
+    // Simple bot name for beginner mode
     const botName = 'n00b_b0t'
     if (!this.nameInUse(botName)) {
       this.addPlayer(botName, true, 'beginner')
     } else {
+      // Fallback if default name is taken
       let randomName = 'b0t_' + Math.floor(Math.random() * 10000)
       this.addPlayer(randomName, true, 'beginner')
     }
@@ -163,6 +180,7 @@ class Home {
    */
   createPlayer (id, playerInfo) {
     if (playerInfo.isAI) {
+      // DEVELOPMENT: Always use beginner personality (only mode available)
       return new AIPlayer(id, playerInfo.name, 'beginner')
     } else {
       return new Player(id, playerInfo.name)
