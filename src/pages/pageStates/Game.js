@@ -185,6 +185,7 @@ class Game {
 
     const fact = new EffectFactory(player)
     player.effects.addNegative(fact.newEffect(card.type, 0, false))
+    bus.emit('hazard-applied', { type: card.type })
     card.discard()
   }
 

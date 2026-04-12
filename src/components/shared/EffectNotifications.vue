@@ -9,6 +9,12 @@
     >
   </div>
   <div
+    v-if="showingHazard"
+    id="hazard-notification"
+  >
+    {{ hazardMessage }}
+  </div>
+  <div
     v-if="showingCollision"
     id="collision-notification"
   >
@@ -42,6 +48,7 @@ import { mapGetters } from 'vuex'
  * that was played was a mimic.
  * - `scan-used` - Shows a scan icon to let the player know when an attack was
  * blocked by a scan.
+ * - `hazard-applied` - Shows a hazard pop up and plays a beep.
  *
  * @vue-data {bool} showing - True if an effect icon should be visible.
  * @vue-data {string} imgPath - A path to the image icon to show.
@@ -55,6 +62,10 @@ export default {
       showing: false,
       imagePath: 'static/cardImages/effects/SCAN.png',
       timeout: 1000,
+      showingHazard: false,
+      hazardMessage: '',
+      hazardTimeout: 1600,
+      audioContext: null,
       showingCollision: false,
       collisionLeft: '',
       collisionRight: '',
@@ -70,12 +81,14 @@ export default {
     bus.on('mimic-played', this.mimicPlayed)
     bus.on('scan-used', this.scanUsed)
     bus.on('attack-blocked', this.attackBlocked)
+    bus.on('hazard-applied', this.hazardApplied)
   },
   beforeUnmount () {
     // Remove listeners for the events before the module is destroyed
     bus.off('mimic-played', this.mimicPlayed)
     bus.off('scan-used', this.scanUsed)
     bus.off('attack-blocked', this.attackBlocked)
+    bus.off('hazard-applied', this.hazardApplied)
   },
   methods: {
     /**
@@ -93,6 +106,45 @@ export default {
       this.showing = true
       this.imagePath = 'static/cardImages/effects/SCAN.png'
       setTimeout(() => { this.showing = false }, this.timeout)
+    },
+    /**
+     * Shows a hazard pop up and plays a short beep.
+     * @param {Object} payload - The hazard payload.
+     */
+    hazardApplied (payload) {
+      const type = payload && payload.type ? payload.type : 'HAZARD'
+      this.hazardMessage = type === 'BUG' ? 'BUG HAPPENED' : 'DISASTER HAPPENED'
+      this.showingHazard = true
+      this.playHazardBeep()
+      setTimeout(() => { this.showingHazard = false }, this.hazardTimeout)
+    },
+    playHazardBeep () {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext
+        if (!AudioContext) {
+          return
+        }
+        if (!this.audioContext) {
+          this.audioContext = new AudioContext()
+        }
+        const context = this.audioContext
+        if (context.state === 'suspended') {
+          context.resume().catch(() => {})
+        }
+        const oscillator = context.createOscillator()
+        const gain = context.createGain()
+        oscillator.type = 'sine'
+        oscillator.frequency.value = 880
+        gain.gain.setValueAtTime(0.0001, context.currentTime)
+        gain.gain.exponentialRampToValueAtTime(0.18, context.currentTime + 0.02)
+        gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.18)
+        oscillator.connect(gain)
+        gain.connect(context.destination)
+        oscillator.start()
+        oscillator.stop(context.currentTime + 0.2)
+      } catch (error) {
+        // Ignore audio errors to avoid breaking the UI
+      }
     },
     /**
      * Shows a collision animation for a blocked attack.
@@ -119,6 +171,26 @@ export default {
   margin-left: auto;
   margin-right: auto;
   z-index: 100;
+}
+
+#hazard-notification {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 130;
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  background: rgba(184, 10, 10, 0.96);
+  border: 2px solid rgba(255, 214, 0, 0.75);
+  box-shadow: 0 0 2rem rgba(255, 214, 0, 0.5);
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 900;
+  text-shadow: 0 0 1rem rgba(0, 0, 0, 0.8);
+  letter-spacing: 0.08rem;
+  animation: hazard-pop 1.6s ease-out;
+  pointer-events: none;
 }
 
 .icon {
@@ -205,6 +277,13 @@ export default {
   20% { transform: scale(1.02); opacity: 1; }
   80% { transform: scale(1.02); opacity: 1; }
   100% { transform: scale(0.98); opacity: 0; }
+}
+
+@keyframes hazard-pop {
+  0% { transform: translateX(-50%) scale(0.85); opacity: 0; }
+  15% { transform: translateX(-50%) scale(1.04); opacity: 1; }
+  70% { transform: translateX(-50%) scale(1.01); opacity: 1; }
+  100% { transform: translateX(-50%) scale(0.98); opacity: 0; }
 }
 
 </style>
