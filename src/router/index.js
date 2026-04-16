@@ -42,12 +42,6 @@ const routes = [
     component: () => import('@/pages/BeginnerGame.vue')
   },
   {
-    path: '/standard',
-    name: 'standardGame',
-    canReuse: false,
-    component: () => import('@/pages/StandardGame.vue')
-  },
-  {
     path: '/help',
     name: 'help',
     component: () => import('@/pages/Help.vue')
@@ -64,7 +58,7 @@ const routes = [
  * Can be imported with `import router from '@/router`
  */
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
 

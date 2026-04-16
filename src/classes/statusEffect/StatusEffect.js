@@ -2,6 +2,7 @@
 // const uuidV1 = require('uuid/v1')
 
 import { v1 as uuidV1 } from 'uuid';
+import { isAttack } from '@/classes/card/cardData'
 
 // const uuidV1 = uuidv1();
 
@@ -25,7 +26,11 @@ class StatusEffect {
     this.player = player
     this.turnsLeft = turnsLeft
     if (hasImage) {
-      this.image = 'static/cardImages/effects/' + type + '.png'
+      if (isAttack(type)) {
+        this.image = 'static/cardImages/attack/' + type.toLowerCase() + '.png'
+      } else {
+        this.image = 'static/cardImages/effects/' + type + '.png'
+      }
     }
   }
 

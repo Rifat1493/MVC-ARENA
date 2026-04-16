@@ -1,4 +1,5 @@
 import EffectFactory from '@/classes/statusEffect/EffectFactory'
+import FixedPenaltyEffect from '@/classes/statusEffect/FixedPenaltyEffect'
 import { bus } from '@/components/shared/Bus'
 
 // Some internal constants for different delays during a players turn
@@ -38,6 +39,7 @@ class Game {
     this.deck = null
     this.isOver = false
     this.wait = false
+    this.hazardsEnabled = false
   }
 
   /**
@@ -104,7 +106,10 @@ class Game {
    */
   drawCards (player) {
     for (let i = player.hand.numCards(); i < player.hand.maxCards; i++) {
-      player.hand.addCard(this.drawCard(player))
+      const card = this.drawCard(player)
+      if (card !== undefined) {
+        player.hand.addCard(card)
+      }
     }
   }
 
@@ -118,7 +123,79 @@ class Game {
    * @return {Card} The drawn card.
    */
   drawCard (player) { // eslint-disable-line no-unused-vars
-    return this.deck.draw()
+    let card = this.deck.draw()
+    let guard = 0
+
+    while (card && this._isAutoHazard(card) && !this.hazardsEnabled) {
+      this._delayHazardCard(card)
+      card = this.deck.draw()
+      guard++
+      if (guard > this.deck.cards.length + 1) {
+        break
+      }
+    }
+
+    if (card && (card.type === 'LOGGER' || card.type === 'GIT')) {
+      this.hazardsEnabled = true
+    }
+
+    if (card && this._isAutoHazard(card)) {
+      this._applyAutoHazard(player, card)
+      card = this.deck.draw()
+      if (card && (card.type === 'LOGGER' || card.type === 'GIT')) {
+        this.hazardsEnabled = true
+      }
+    }
+
+    return card
+  }
+
+  /**
+   * Checks if a card is an auto-applied hazard card.
+   * @param {Card} card - The card to check.
+   * @return {bool} True if the card is a hazard.
+   * @private
+   */
+  _isAutoHazard (card) {
+    return card.type === 'BUG' || card.type === 'DISASTER'
+  }
+
+  /**
+   * Applies a hazard card to the player who drew it.
+   * @param {Player} player - The player drawing the card.
+   * @param {Card} card - The hazard card.
+   * @private
+   */
+  _applyAutoHazard (player, card) {
+    const defenseMatch = player.getDefenseCardForAttack(card.type)
+
+    if (defenseMatch) {
+      const { card: defenseCard, stack } = defenseMatch
+      if (stack) {
+        stack.cards = stack.cards.filter(c => c !== defenseCard)
+        defenseCard.discard()
+      }
+    } else {
+      const penalty = -Math.floor(player.getScore() * 0.5)
+      if (penalty !== 0) {
+        const penaltyType = card.type + '_PENALTY'
+        player.effects.addNegative(new FixedPenaltyEffect(penaltyType, player, penalty))
+      }
+    }
+
+    const fact = new EffectFactory(player)
+    player.effects.addNegative(fact.newEffect(card.type, 0, false))
+    bus.emit('hazard-applied', { type: card.type })
+    card.discard()
+  }
+
+  /**
+   * Moves a hazard card to the bottom of the deck until hazards are enabled.
+   * @param {Card} card - The hazard card to delay.
+   * @private
+   */
+  _delayHazardCard (card) {
+    this.deck.cards.push(card)
   }
 
   /**
@@ -218,6 +295,9 @@ class Game {
     } else if (playInfo.replaced) {
       bus.emit('mimic-played')
     }
+    if (playInfo.blockedBy) {
+      bus.emit('attack-blocked', playInfo.blockedBy)
+    }
     bus.emit('card-played', playInfo)
   }
 
@@ -259,15 +339,43 @@ class Game {
     }, REDRAW_DELAY)
 
     setTimeout(() => {
-      if (!this.endGame()) {
-        this.nextPlayer()
-        this.wait = false
+        if (!this.endGame()) {
+          this.nextPlayer()
+          this._skipBlockedPlayers()
+          this.wait = false
 
-        if (this.currentPlayer().isAI) {
-          this.takeAITurn()
+          if (this.currentPlayer().isAI) {
+            this.takeAITurn()
+          }
         }
-      }
     }, TURN_DELAY)
+  }
+
+  /**
+   * Skips players who are blocked by BUG or DISASTER effects.
+   * @private
+   */
+  _skipBlockedPlayers () {
+    let safety = 0
+    while (this._consumeSkipEffect(this.currentPlayer()) && safety < this.players.length) {
+      this.nextPlayer()
+      safety++
+    }
+  }
+
+  /**
+   * Consumes a single skip effect from a player.
+   * @param {Player} player - The player to check.
+   * @return {bool} True if a skip effect was consumed.
+   * @private
+   */
+  _consumeSkipEffect (player) {
+    const effect = player.effects.negative.find(e => e.type === 'BUG' || e.type === 'DISASTER')
+    if (!effect) {
+      return false
+    }
+    player.effects.removeEffect(effect)
+    return true
   }
 
   /**

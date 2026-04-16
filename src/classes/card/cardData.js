@@ -2,10 +2,7 @@
  * Helper functions to make it easier to help check what catergories a card
  * type may fall into.
  *
- * i.e. `RANSOM` is `malware`, it is also an `attack` and `negative` effect. \
- * `SCAN` is a `safety` card, but it is **not** a `positive` effect. \
- * all `safety`, `malware`, `hack`, and `algorithm` cards are `special` cards
- * except for `VIRUS`.
+ * DEVELOPMENT: Simplified for INSTRUCTION, METHOD, RANSOM, and COMPONENT cards.
  *
  * Functions need to be imported like this `import { isHack } from`.
  *
@@ -13,28 +10,76 @@
  */
 
 // All malware card types
+// DEVELOPMENT: Only RANSOM
 const malware = [
-  "RANSOM", "SPYWARE", "VIRUS", "TROJAN"
+  "RANSOM"
 ]
 
-// All hack card types
+// All hack card types (attacking cards that can be played anywhere)
+// DEVELOPMENT: CSRF, DOS, MALWARE, SQL_INJECTION, UNAUTHORIZED_ACCESS, XSS
 const hack = [
-  "STACK_OVERFLOW", "STACK_UNDERFLOW", "SQL_INJECTION", "DDOS"
+  "CSRF", "DOS", "MALWARE", "SQL_INJECTION", "UNAUTHORIZED_ACCESS", "XSS"
 ]
 
 // All safety card types
+// DEVELOPMENT: Empty - no safety cards used
 const safety = [
-  "ANTIVIRUS", "FIREWALL", "SCAN"
 ]
 
 // All algorithm card types
+// DEVELOPMENT: Empty - no algorithm cards used
 const algorithm = [
-  "SEARCH", "SORT", "REDRAW"
 ]
 
+// Defensive cards that act like repeat multipliers on stacks
+const defensiveMultipliers = [
+  'INTERFACE', 'POLYMORPHISM', 'GIT', 'ERROR_HANDLING', 'LOGGER'
+]
+
+// Attack counters based on component cards or special defense types
+const attackCounters = {
+  DOS: {
+    components: ['rate_limiting', 'caching', 'input_validation'],
+    types: []
+  },
+  SQL_INJECTION: {
+    components: ['orm'],
+    types: []
+  },
+  XSS: {
+    components: ['data_validation'],
+    types: []
+  },
+  CSRF: {
+    components: ['csrf_protection'],
+    types: []
+  },
+  RANSOM: {
+    components: ['secrets_manager'],
+    types: ['GIT']
+  },
+  MALWARE: {
+    components: ['file_storage_adapter'],
+    types: []
+  },
+  UNAUTHORIZED_ACCESS: {
+    components: ['authentication', 'authorization'],
+    types: []
+  },
+  BUG: {
+    components: [],
+    types: ['LOGGER']
+  },
+  DISASTER: {
+    components: [],
+    types: ['GIT']
+  }
+}
+
 // types that can start a stack
+// DEVELOPMENT: INSTRUCTION, METHOD, and COMPONENT cards
 const base = [
-  "INSTRUCTION", "METHOD"
+  "INSTRUCTION", "METHOD", "MODEL", "VIEW", "CONTROLLER"
 ]
 
 // all cards that are considered attacks
@@ -43,30 +88,35 @@ const attacks = [
 ]
 
 // all card types that use the NegativeEffectCard
+// DEVELOPMENT: Only RANSOM
 const negativeEffects = [
   ...malware.filter(m => m !== "VIRUS" && m !== "TROJAN"),
   ...hack
 ]
 
 // all card types that use the PositiveEffectCard
+// DEVELOPMENT: Empty - no safety cards
 const positiveEffects = [
   ...safety
 ]
 
 // Cards that will have an overlay to play them
+// DEVELOPMENT: Only RANSOM
 const special = [
   ...safety, ...algorithm, ...hack,
   ...malware.filter(m => m !== "VIRUS"),
 ]
 
 // Cards that can be played on a stack (when it has a base)
+// DEVELOPMENT: Defensive multiplier cards
 const onStack = [
-  'REPEAT', 'VARIABLE', 'VIRUS'
+  ...defensiveMultipliers
 ]
 
 // Cards that can be played on the method stack
+// DEVELOPMENT: INSTRUCTION and COMPONENT cards (for point accumulation)
 const onMethod = [
-  'INSTRUCTION'
+  'INSTRUCTION', 'MODEL', 'VIEW', 'CONTROLLER'
 ]
 
 // Returns a function to find if a card type is in the given typeList
@@ -176,6 +226,33 @@ const canPlayOnStack = _isType(onStack)
  */
 const canPlayOnMethod = _isType(onMethod)
 
+/**
+ * Checks if a type is a repeat-like stack multiplier.
+ *
+ * @param {string} type - The type to check.
+ * @returns {bool} True if the type is repeat-like.
+ * @function
+ */
+const isRepeatLike = _isType(['REPEAT', ...defensiveMultipliers])
+
+/**
+ * Returns the defense counters for a given attack type.
+ *
+ * @param {string} attackType - The attack type to check.
+ * @returns {{components: string[], types: string[]}} The defense counters.
+ * @function
+ */
+function getAttackCounters (attackType) {
+  const counters = attackCounters[attackType]
+  if (!counters) {
+    return { components: [], types: [] }
+  }
+  return {
+    components: counters.components || [],
+    types: counters.types || []
+  }
+}
+
 export {
   isMalware,
   isHack,
@@ -187,5 +264,7 @@ export {
   isSpecial,
   isBase,
   canPlayOnStack,
-  canPlayOnMethod
+  canPlayOnMethod,
+  isRepeatLike,
+  getAttackCounters
 }

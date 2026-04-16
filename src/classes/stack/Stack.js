@@ -1,4 +1,4 @@
-import { isBase, canPlayOnStack } from '@/classes/card/cardData'
+import { isBase, canPlayOnStack, isRepeatLike } from '@/classes/card/cardData'
 
 // The maximum number of repeats allowed in a stack
 const MAX_REPEATS = 2
@@ -124,7 +124,7 @@ class Stack {
       return false
     } else if (card.type === "VARIABLE") {
       return this._willAcceptVar(card)
-    } else if (card.type === "REPEAT") {
+    } else if (isRepeatLike(card.type)) {
       return !this.topIsRx() && !this._hasMaxRepeats()
     } else {
       return canPlayOnStack(card.type)
@@ -186,7 +186,7 @@ class Stack {
    */
   _hasMaxRepeats () {
     let numRepeats = this.cards.reduce((acc, card) => {
-      return card.type === 'REPEAT' ? acc + 1 : acc
+      return isRepeatLike(card.type) ? acc + 1 : acc
     }, 0)
     return numRepeats >= MAX_REPEATS
   }

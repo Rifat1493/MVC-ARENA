@@ -23,19 +23,15 @@
         </div>
 
         <div class="modal-body">
-          <p style="font-size: 1.3rem;">
-            When artificial intelligence surpassed human intelligence,
-            it didn’t take long before the robots rose up and enslaved humanity.
-            We fought back but we were no match for their coding abilities.
+          <p style="font-size: 1.3rem; text-align: left;">
+            MVC-ARENA drops players into a futuristic world where coding is the ultimate weapon. 
+            In a time when machines dominate through superior programming, humans must rely on strategy, logic, and 
+            efficient design patterns to compete and survive.
             <br>
             <br>
-            We now serve the robots and do their bidding. They force us to do
-            their unwanted jobs while they have all sorts of cool coding
-            competitions. After a life of oppression, you have joined the human
-            resistance. The resistance has developed a highly efficient method
-            of coding that allows humans to enter the coding competitions without
-            the robots suspecting. You are now ready to take the fight to the
-            robots and save humanity!
+          As part of the resistance, players use MVC principles to outmaneuver opponents, optimize their decisions, and 
+          reclaim control one challenge at a time. Every move is a balance between attack, defense, and smart resource management—turning 
+          coding knowledge into a competitive advantage in the fight to restore human freedom.
           </p>
         </div>
 

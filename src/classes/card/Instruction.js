@@ -25,6 +25,7 @@ class Instruction extends Card {
    * the card was played on a MethodStack.
    * @param {PlayField} playInfo.playField - The playField the card was played on.
    * Required if the card started a new Stack.
+   * @param {int} [playInfo.laneIndex=0] - The lane index to add the stack to.
    */
   play (playInfo) {
     if (playInfo.stack) {
@@ -35,7 +36,7 @@ class Instruction extends Card {
       }
     } else {
       const newStack = new Stack(this, playInfo.playField.player)
-      playInfo.playField.addStack(newStack)
+      playInfo.playField.addStack(newStack, playInfo.laneIndex)
     }
   }
 }

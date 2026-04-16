@@ -74,8 +74,7 @@ export default {
       return !this.ownedByCurrentPlayer && !this.stack.player.protectedFrom('VIRUS')
     },
     ownerHurtBySql () {
-      return (this.stack.isMethod || this.stack.getBase().type === 'METHOD')
-          && this.stack.player.hurtBy('SQL_INJECTION')
+      return false
     },
     scoreClass () {
       const top = this.stack.getTop()
@@ -91,7 +90,7 @@ export default {
       return this.stack.isMethod ? '-2.5rem' : '-2.2rem'
     },
     scoreText () {
-      return this.stack.isMethod ? 'MethodStack' : 'Score'
+      return this.stack.isMethod ? 'InheritanceStack' : 'Score'
     }
   },
   created () {

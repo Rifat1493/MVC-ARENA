@@ -2,7 +2,7 @@
   <div id="home-page">
     <page-header>
       <template #pageHeading>
-        Welcome to Program Wars!
+        Welcome to MVC-ARENA!
       </template>
     </page-header>
 
@@ -10,8 +10,6 @@
       id="game-setup"
       class="centered"
     >
-      <game-mode />
-      <select-level />
       <add-players />
 
       <div
@@ -20,10 +18,11 @@
       >
         {{ home.message }}
       </div>
+
       <button
         id="go"
         class="centered btn btn-success"
-        :disabled="!home.hasEnoughPlayers()"
+        :disabled="!home.canStart()"
         @click="playGame()"
       >
         Play
@@ -32,11 +31,8 @@
   </div>
 </template>
 
-
 <script>
 import PageHeader from '@/components/shared/PageHeader'
-import GameMode from '@/components/setup/GameMode'
-import SelectLevel from '@/components/setup/SelectLevel'
 import AddPlayers from '@/components/setup/AddPlayers'
 import { mapActions, mapGetters } from 'vuex'
 
@@ -47,8 +43,6 @@ export default {
   name: 'HomePage',
   components: {
     'page-header': PageHeader,
-    'game-mode': GameMode,
-    'select-level': SelectLevel,
     'add-players': AddPlayers
   },
   computed: {
@@ -56,31 +50,20 @@ export default {
   },
   methods: {
     ...mapActions([
-      'startBeginnerGame',
-      'startStandardGame'
+      'startBeginnerGame'
     ]),
     /**
-     * Starts a new game using the information from the home page state.
-     *
-     * This is where new game modes will need to be added with their
-     * appropriate actions for routing to their specific game page with
-     * the appropriate game state.
+     * Starts a beginner game using the information from the home page state.
      */
     playGame () {
       if (this.home.canStart()) {
-        if (this.home.mode === 'beginner') {
-          this.startBeginnerGame({
-            players: this.home.createPlayers(), level: this.home.level })
-        } else {
-          this.startStandardGame({
-            players: this.home.createPlayers(), level: this.home.level })
-        }
+        this.startBeginnerGame({
+          players: this.home.createPlayers(), level: this.home.level })
       }
     }
   }
 }
 </script>
-
 
 <style scoped>
 #home-page {

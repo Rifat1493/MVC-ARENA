@@ -3,11 +3,11 @@ import EffectWithCard from '@/classes/statusEffect/EffectWithCard'
 import CyberAttack from '@/classes/statusEffect/CyberAttack'
 import AttackWithBonus from '@/classes/statusEffect/AttackWithBonus'
 import InvisibleBonusEffect from '@/classes/statusEffect/InvisibleBonusEffect'
-import SqlEffect from '@/classes/statusEffect/SqlEffect'
 
 // Map from effect types to their penalty points (if they have them)
 const penalties = {
-  'RANSOM': -10, 'SQL_INJECTION': -2
+  'RANSOM': -10, 'SQL_INJECTION': -5, 'CSRF': -5, 'DOS': -5,
+  'MALWARE': -5, 'UNAUTHORIZED_ACCESS': -10, 'XSS': -5
 }
 
 // Map from effect types to their bonus points (if they have them)
@@ -19,7 +19,7 @@ const bonuses = {
 // spyware adds +1 as it updates once before you can use its effect
 const turns = {
   'SPYWARE': 6, 'STACK_OVERFLOW': 2, 'STACK_UNDERFLOW': 2, 'DDOS': 3,
-  'REDRAW_CD': 3
+  'REDRAW_CD': 3, 'BUG': 2, 'DISASTER': 2
 }
 
 /**
@@ -76,9 +76,7 @@ class EffectFactory {
     const penalty = this._getPenalty(card.type)
     const bonus = this._getBonus(card.type)
 
-    if (card.type === 'SQL_INJECTION') {
-      return new SqlEffect(card, this.player, turns, attacker, penalty)
-    } else if (bonus !== 0) {
+    if (bonus !== 0) {
       const bonusEffect = new InvisibleBonusEffect(card.type, this.player, turns, bonus)
       return new AttackWithBonus(card, this.player, turns, attacker, penalty, bonusEffect)
     } else {

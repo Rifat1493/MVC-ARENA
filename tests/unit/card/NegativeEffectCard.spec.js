@@ -8,7 +8,8 @@ function fakeTarget ({ helped, hurt, protect }) {
     effects: { addNegative: jest.fn() },
     helpedBy: jest.fn(() => { return helped || false }),
     hurtBy: jest.fn(() => { return hurt || false }),
-    protectedFrom: jest.fn(() => { return protect || false })
+    protectedFrom: jest.fn(() => { return protect || false }),
+    getDefenseCardForAttack: jest.fn(() => { return null })
   }
 }
 
@@ -26,6 +27,33 @@ describe('NegativeEffectCard', () => {
   })
 
   describe('play', () => {
+    test('when a defense card cancels the attack', () => {
+      const card = new NegativeEffectCard('SQL_INJECTION', 'deck')
+      card.discard = jest.fn()
+      const defenseCard = {
+        componentName: 'orm',
+        image: 'static/cardImages/model/orm.png',
+        discard: jest.fn()
+      }
+      const defenseStack = { cards: [defenseCard, { type: 'MODEL' }] }
+      const target = fakeTarget({})
+      target.getDefenseCardForAttack = jest.fn(() => {
+        return { card: defenseCard, stack: defenseStack }
+      })
+      const playInfo = { target }
+
+      card.play(playInfo)
+
+      expect(target.getDefenseCardForAttack).toBeCalledTimes(1)
+      expect(card.discard).toBeCalledTimes(1)
+      expect(defenseCard.discard).toBeCalledTimes(1)
+      expect(defenseStack.cards).not.toContain(defenseCard)
+      expect(playInfo.blockedBy).toBeTruthy()
+      expect(playInfo.blockedBy.message).toContain('Orm')
+      expect(playInfo.blockedBy.message).toContain('SQL Injection')
+      expect(target.effects.addNegative).not.toBeCalled()
+    })
+
     test('player is protected by scan', () => {
       const card = new NegativeEffectCard('SPYWARE', 'deck')
       card._blockedByScan = jest.fn()

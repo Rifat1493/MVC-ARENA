@@ -137,7 +137,12 @@ class Deck {
     const fact = new CardFactory()
     for (const {type, val, num} of cardTypes) {
       for (let i = 0; i < num; i++) {
-        this.cards.push(fact.newCard(type, val, this))
+        try {
+          this.cards.push(fact.newCard(type, val, this))
+        } catch (error) {
+          console.error(`Error creating card type ${type}:`, error)
+          throw error
+        }
       }
     }
   }

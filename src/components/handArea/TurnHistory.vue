@@ -83,6 +83,18 @@ export default {
         path += 'DISCARD'
       } else if (play.type === 'pass') {
         path += 'PASS'
+      } else if (isAttack(play.card.type)) {
+        // Attack cards are in the attack directory
+        path = 'static/cardImages/attack/'
+        path += play.card.type.toLowerCase()
+      } else if (['MODEL', 'VIEW', 'CONTROLLER'].includes(play.card.type)) {
+        // Component cards are in their own type directories
+        const typeFolder = play.card.type.toLowerCase()
+        path = `static/cardImages/${typeFolder}/${play.card.componentName}`
+
+
+      } else if (['INTERFACE', 'POLYMORPHISM', 'GIT', 'ERROR_HANDLING', 'LOGGER'].includes(play.card.type)) {
+        return play.card.image
       } else if (isSpecial(play.card.type) || play.card.type === 'VIRUS'
                  || play.card.type === 'METHOD'){
         path += play.card.type

@@ -19,14 +19,23 @@ describe('Method class', () => {
   })
 
   test('playing the method card', () => {
-    const playField = { method: 'method', player: 'player', addStack: jest.fn() }
-    const playInfo = { playField }
+    const method0 = 'method0'
+    const lane0 = { method: method0 }
+    const playField = {
+      method: method0, // backward compatibility
+      player: 'player',
+      lanes: [lane0, { method: 'method1' }, { method: 'method2' }],
+      getLane: jest.fn((i) => playField.lanes[i]),
+      addStack: jest.fn()
+    }
+    const playInfo = { playField, laneIndex: 0 }
 
     const card = new Method('deck')
     card.play(playInfo)
 
-    expect(MethodCardWrapper).toBeCalledWith(card, playField.method)
+    expect(playField.getLane).toBeCalledWith(0)
+    expect(MethodCardWrapper).toBeCalledWith(card, method0)
     expect(Stack).toBeCalledWith(MethodCardWrapper.mock.instances[0], playField.player)
-    expect(playField.addStack).toBeCalledWith(Stack.mock.instances[0])
+    expect(playField.addStack).toBeCalledWith(Stack.mock.instances[0], 0)
   })
 })

@@ -13,7 +13,7 @@
  */
 
 import BeginnerGame from '@/pages/pageStates/BeginnerGame'
-import StandardGame from '@/pages/pageStates/StandardGame'
+// import StandardGame from '@/pages/pageStates/StandardGame' // DEVELOPMENT: Removed
 
 /**
  * Starts a new beginner game, creating the state and navigating to the page.
@@ -30,20 +30,6 @@ function startBeginnerGame ({ commit }, { players, level }) {
 }
 
 /**
- * Starts a new standard game, creating the state and navigating to the page.
- *
- * @param {function} commit - A vuex function that allows commiting mutations.
- * @param {Object} payload - The information needed for the action.
- * @param {Player[]} payload.players - A list of players in the game.
- * @param {Object} payload.level - A level object for the game. See
- * {@link deckData} for more information on what this object looks like.
- */
-function startStandardGame ({ commit }, { players, level }) {
-  commit('pushGameState', { gameState: new StandardGame(players, level) })
-  commit('changePage', { page: 'standard' })
-}
-
-/**
  * Navigates back to the home page, does not change the home page.
  *
  * @param {function} commit - A vuex function that allows commiting mutations.
@@ -55,6 +41,5 @@ function leaveGame ({ commit }) {
 
 export default {
   startBeginnerGame,
-  startStandardGame,
   leaveGame
 }
