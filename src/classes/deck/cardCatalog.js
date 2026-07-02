@@ -15,7 +15,7 @@
 const cardCatalog = {
   // Component cards - variant is the component name
   MODEL: ['caching', 'data_validation', 'database', 'file_storage_adapter', 'orm', 'secrets_manager'],
-  VIEW: ['cli_view', 'input_validation', 'mobile_view', 'web_view'],
+  VIEW: ['cli_view', 'output_validation', 'mobile_view', 'web_view'],
   CONTROLLER: ['Middleware', 'Routing', 'authentication', 'authorization', 'csrf_protection', 'rate_limiting'],
 
   // Inheritance / stack-starter card

@@ -14,7 +14,7 @@ start a stack, or onto the lane's **inheritance stack** to add points.
 | **Lane** | **Components** |
 | -------- | -------------- |
 | **Model** | Caching, Data Validation, Database, File Storage Adapter, ORM, Secrets Manager |
-| **View** | Web View, Mobile View, CLI View, Input Validation |
+| **View** | Web View, Mobile View, CLI View, Output Validation |
 | **Controller** | Authentication, Authorization, Routing, Middleware, Rate Limiting, CSRF Protection |
 |||
 
@@ -72,9 +72,9 @@ and the defending card is used up instead of the player losing points.
 
 | **Attack** | **Defended by** |
 | ---------- | --------------- |
-| DoS | Rate Limiting, Caching, Input Validation |
+| DoS | Rate Limiting, Caching |
 | SQL Injection | ORM |
-| XSS | Data Validation |
+| XSS | Data Validation, Output Validation |
 | CSRF | CSRF Protection |
 | Malware | File Storage Adapter |
 | Unauthorized Access | Authentication, Authorization |
