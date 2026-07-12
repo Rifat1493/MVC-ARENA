@@ -19,14 +19,28 @@
         {{ home.message }}
       </div>
 
-      <button
-        id="go"
-        class="centered btn btn-success"
-        :disabled="!home.canStart()"
-        @click="playGame()"
+      <div
+        id="play-buttons"
+        class="centered"
       >
-        Play
-      </button>
+        <button
+          id="go"
+          class="btn btn-success"
+          :disabled="!home.canStart()"
+          @click="playBase()"
+        >
+          Play Base
+        </button>
+
+        <button
+          id="go-flow"
+          class="btn btn-info"
+          :disabled="!home.canStart()"
+          @click="playFlow()"
+        >
+          Play Flow
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -35,6 +49,7 @@
 import PageHeader from '@/components/shared/PageHeader'
 import AddPlayers from '@/components/setup/AddPlayers'
 import { mapActions, mapGetters } from 'vuex'
+import { setPendingSetup } from '@/flow-mode/pendingSetup'
 
 /**
  * The main landing page component for Program Wars where players set up and start games.
@@ -53,13 +68,31 @@ export default {
       'startBeginnerGame'
     ]),
     /**
-     * Starts a beginner game using the information from the home page state.
+     * Starts a Base Mode game using the players set up on this page.
      */
-    playGame () {
+    playBase () {
       if (this.home.canStart()) {
         this.startBeginnerGame({
           players: this.home.createPlayers(), level: this.home.level })
       }
+    },
+    /**
+     * Starts Flow Mode using the same players set up on this page (via
+     * AddPlayers), rather than asking again. Flow Mode is a fully separate
+     * game mode (see src/flow-mode/) that keeps its own local match state
+     * instead of using Vuex, so the chosen names/bot flag are handed off via
+     * {@link setPendingSetup} instead of the route (keeping the URL a plain
+     * `/flow`) for `FlowModePage` to pick up in its `created()` hook.
+     * `home.players` is already sorted human-first (see Home.js#sortPlayers),
+     * and canStart() guarantees player 1 is human.
+     */
+    playFlow () {
+      if (!this.home.canStart()) { return }
+      const [player1, player2] = this.home.players
+      setPendingSetup({
+        player1Name: player1.name, player2IsBot: player2.isAI, player2Name: player2.name
+      })
+      this.$router.push('/flow')
     }
   }
 }
@@ -90,10 +123,13 @@ export default {
   color: red;
 }
 
-#go {
-  display: inline-block;
+#play-buttons {
   position: absolute;
   bottom: 2%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
 }
 
 .centered {

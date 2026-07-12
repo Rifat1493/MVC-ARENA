@@ -20,7 +20,7 @@ from attacks and disasters. The first player to collect the required components
 
 + **Component cards** (each worth 1 point)
   - Model: Caching, Data Validation, Database, File Storage Adapter, ORM, Secrets Manager
-  - View: Web View, Mobile View, CLI View, Input Validation
+  - View: Web View, Mobile View, CLI View, Output Validation
   - Controller: Authentication, Authorization, Routing, Middleware, Rate Limiting, CSRF Protection
   
 + **Inheritance card**

@@ -21,7 +21,7 @@ const descriptions = {
 
   // --- View components ---
   cli_view: 'CLI View: a command-line interface for interacting with the app through text commands.',
-  input_validation: 'Input Validation: verifies user input on the way in, rejecting malformed or malicious entries. Helps defend against DoS.',
+  output_validation: 'Output Validation: escapes and encodes data right before it is displayed, so malicious scripts embedded in it cannot run. Defends against XSS.',
   mobile_view: 'Mobile View: the user interface optimized for phones and tablets.',
   web_view: 'Web View: the browser-based user interface.',
 

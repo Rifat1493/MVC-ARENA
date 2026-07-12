@@ -41,7 +41,7 @@ const defensiveMultipliers = [
 // Attack counters based on component cards or special defense types
 const attackCounters = {
   DOS: {
-    components: ['rate_limiting', 'caching', 'input_validation'],
+    components: ['rate_limiting', 'caching'],
     types: []
   },
   SQL_INJECTION: {
@@ -49,7 +49,7 @@ const attackCounters = {
     types: []
   },
   XSS: {
-    components: ['data_validation'],
+    components: ['data_validation', 'output_validation'],
     types: []
   },
   CSRF: {

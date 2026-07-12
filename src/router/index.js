@@ -47,6 +47,12 @@ const routes = [
     component: () => import('@/pages/Help.vue')
   },
   {
+    path: '/flow',
+    name: 'flowMode',
+    canReuse: false,
+    component: () => import('@/flow-mode/FlowModePage.vue')
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/'
   }
