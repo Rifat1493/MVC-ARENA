@@ -8,5 +8,8 @@
     "dist/**",
     "docs/*",
     "docs/**"
-  ]
+  ],
+  "rules": {
+    "selector-pseudo-class-no-unknown": [true, { "ignorePseudoClasses": ["deep"] }]
+  }
 }

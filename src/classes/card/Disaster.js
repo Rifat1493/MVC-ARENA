@@ -10,7 +10,7 @@ class Disaster extends Card {
    * @param {Deck} deck - The deck the card is in.
    */
   constructor (deck) {
-    super(0, 'DISASTER', deck, Card.imgPath('disaster'))
+    super(0, 'DISASTER', deck, 'static/cardImages/destructive/disaster.png')
   }
 }
 
