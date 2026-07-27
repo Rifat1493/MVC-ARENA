@@ -106,3 +106,37 @@ next turn is restricted.
 **Relation to software:** A **Bug** is a defect in the code (a Logger helps you find
 and fix it), and a **Disaster** is a catastrophic failure or data loss (Git backups
 let you recover).
+
+
+
+# Flow Mode
+
+Flow Mode is a competitive system-building challenge (Player 1 vs Player 2 or Bot).
+You improve an MVC architecture across **4 iterations**, each driven by a software
+**use case** that also teaches a security risk (SQL injection, XSS, session theft,
+CSRF, unauthorized access, and more).
+
+## Match flow
+
+1. **Reveal use case** — Read the scenario only (security risk and required cards stay hidden).
+2. **Select cards** (only after reading the use case)
+   - Iteration 1: choose exactly **2 Controller**, **2 Model**, and **1 View**.
+   - Iterations 2–4: read the **new use case first**, then add exactly **2 new cards**.
+3. **Review** — Selected cards are placed automatically into their Controller /
+   Model / View layers.
+4. **Simulate** — Watch an automatic ~30 second request/response animation. The use
+   case is **fulfilled** only if every required card is installed; otherwise the
+   flow stops at the first missing card. Afterward, the security risk and required
+   cards are revealed.
+5. Repeat for four different use cases, then compare scores.
+
+## Scoring
+
+- **+1** for each fulfilled use case.
+- If tied, the player who covered more **required cards** across the match wins.
+- If still tied, the match is a draw.
+
+The same 16 MVC component cards from Base Mode are used here (Routing, ORM,
+Authentication, Mobile View, Output Validation, and the rest). Guards such as
+ORM, Authentication, and Output Validation are often required to stop the use
+case’s threat.

@@ -1,100 +1,148 @@
 /**
- * A simple, rule-based (no lookahead) bot opponent for Flow Mode, matching
- * this project's existing AI design philosophy (see
- * `src/classes/AIHandler/PlayBestCard.js`: a greedy, single-ply priority list).
+ * Rule-based bot opponent for use-case Flow Mode.
+ *
+ * Priority: cover missing required cards for the current use case, then fill
+ * remaining quotas / upgrade slots with useful security and coverage cards.
  *
  * @module flow-mode/engine/botStrategy
  */
 
-import { LAYERS } from '@/flow-mode/engine/constants'
 import { cardById } from '@/flow-mode/data/cards'
-import { placeCard } from '@/flow-mode/engine/board'
-import { rngPick } from '@/flow-mode/engine/rng'
+import {
+  INITIAL_CONTROLLER_CARDS,
+  INITIAL_MODEL_CARDS,
+  INITIAL_VIEW_CARDS,
+  INITIAL_CARD_TOTAL,
+  UPGRADE_CARDS_PER_TURN
+} from '@/flow-mode/engine/constants'
+import { availableCards, countSelectedByLayer } from '@/flow-mode/engine/selection'
+import { placeAllUnplacedCards } from '@/flow-mode/engine/board'
+import { rngPick, rngShuffle } from '@/flow-mode/engine/rng'
+
+/** Prefer guards / defenses when filling leftover slots. */
+const DEFENSE_PRIORITY = [
+  'controller-authentication',
+  'model-orm',
+  'view-output-validation',
+  'controller-csrf-protection',
+  'controller-authorization',
+  'controller-rate-limiting',
+  'model-data-validation',
+  'model-secrets-manager',
+  'model-file-storage-adapter'
+]
 
 /**
- * Counts how many drafted cards a board has in each layer.
- * @param {PlayerBoard} board - The bot's board.
- * @return {Object} `{ controller: int, model: int, view: int }`.
+ * Cards still needed from the current use case that the bot does not own.
+ * @param {PlayerBoard} board - Bot board.
+ * @param {UseCase} useCase - Current use case.
+ * @param {string[]} [alreadyPicking=[]] - Cards already chosen in this selection.
+ * @return {FlowCard[]} Missing required cards that are still available.
  * @private
  */
-function countByLayer (board) {
-  const counts = { controller: 0, model: 0, view: 0 }
-  for (const cardId of board.drafted) {
-    const card = cardById(cardId)
-    if (card) { counts[card.layer]++ }
-  }
-  return counts
+function missingRequiredCards (board, useCase, alreadyPicking = []) {
+  const owned = new Set([...board.drafted, ...alreadyPicking])
+  return useCase.requiredCardIds
+    .filter(id => !owned.has(id))
+    .map(id => cardById(id))
+    .filter(Boolean)
 }
 
 /**
- * Returns true if the board already has (drafted) a guard blocking the given
- * threat type.
- * @param {PlayerBoard} board - The bot's board.
- * @param {string} threatType - The threat type to check for.
- * @return {bool} True if a guard for that threat has already been drafted.
- * @private
+ * Chooses the bot's initial 2 Controller / 2 Model / 1 View selection.
+ * @param {function(): number} rng - Bot rng.
+ * @param {PlayerBoard} board - Bot board (drafted should be empty).
+ * @param {UseCase} useCase - Revealed use case.
+ * @return {string[]} Selected card ids.
  */
-function hasGuardFor (board, threatType) {
-  return board.drafted.some(id => {
-    const card = cardById(id)
-    return card && card.blocks === threatType
-  })
+function chooseBotInitialSelection (rng, board, useCase) {
+  const selected = []
+  const needed = missingRequiredCards(board, useCase)
+
+  for (const card of needed) {
+    const counts = countSelectedByLayer(selected)
+    const quotas = {
+      controller: INITIAL_CONTROLLER_CARDS,
+      model: INITIAL_MODEL_CARDS,
+      view: INITIAL_VIEW_CARDS
+    }
+    if (counts[card.layer] < quotas[card.layer] && !selected.includes(card.id)) {
+      selected.push(card.id)
+    }
+    if (selected.length >= INITIAL_CARD_TOTAL) { break }
+  }
+
+  const quotas = {
+    controller: INITIAL_CONTROLLER_CARDS,
+    model: INITIAL_MODEL_CARDS,
+    view: INITIAL_VIEW_CARDS
+  }
+  const pool = rngShuffle(rng, availableCards(selected))
+
+  for (const layer of ['controller', 'model', 'view']) {
+    while (countSelectedByLayer(selected)[layer] < quotas[layer]) {
+      const preferred = DEFENSE_PRIORITY
+        .map(id => cardById(id))
+        .filter(c => c && c.layer === layer && !selected.includes(c.id))
+      const candidates = preferred.length > 0
+        ? preferred
+        : pool.filter(c => c.layer === layer && !selected.includes(c.id))
+      if (candidates.length === 0) { break }
+      selected.push(rngPick(rng, candidates).id)
+    }
+  }
+
+  return selected.slice(0, INITIAL_CARD_TOTAL)
 }
 
 /**
- * Chooses which of the 3 offered draft cards the bot should pick.
- *
- * Priority order:
- * 1. A guard for a threat type the forecast flags, if the bot doesn't have
- *    one yet.
- * 2. A functional (route/handler/template) card for a layer where the bot
- *    currently has zero cards.
- * 3. The card whose layer currently has the fewest drafted cards (keeps the
- *    board balanced).
- * Ties are broken randomly.
- *
- * @param {function(): number} rng - The bot's rng function.
- * @param {FlowCard[]} options - The 3 cards offered.
- * @param {PlayerBoard} board - The bot's board so far.
- * @param {Object} forecast - The current round's forecast (may be null before round 1).
- * @return {string} The chosen card's id.
+ * Chooses exactly two upgrade cards, preferring missing required cards.
+ * @param {function(): number} rng - Bot rng.
+ * @param {PlayerBoard} board - Bot board.
+ * @param {UseCase} useCase - Revealed use case.
+ * @return {string[]} Two card ids.
  */
-function chooseBotDraftPick (rng, options, board, forecast) {
-  const flaggedThreats = forecast ? forecast.threatTypesPresent : []
+function chooseBotUpgradeSelection (rng, board, useCase) {
+  const selected = []
+  const needed = missingRequiredCards(board, useCase)
 
-  const neededGuards = options.filter(c =>
-    c.kind === 'guard' && flaggedThreats.includes(c.blocks) && !hasGuardFor(board, c.blocks))
-  if (neededGuards.length > 0) {
-    return rngPick(rng, neededGuards).id
+  for (const card of needed) {
+    if (selected.length >= UPGRADE_CARDS_PER_TURN) { break }
+    selected.push(card.id)
   }
 
-  const counts = countByLayer(board)
-  const emptyLayerCards = options.filter(c => c.kind !== 'guard' && counts[c.layer] === 0)
-  if (emptyLayerCards.length > 0) {
-    return rngPick(rng, emptyLayerCards).id
+  if (selected.length < UPGRADE_CARDS_PER_TURN) {
+    const pool = availableCards([...board.drafted, ...selected])
+    const preferred = DEFENSE_PRIORITY
+      .map(id => cardById(id))
+      .filter(c => c && pool.some(p => p.id === c.id))
+    const fillers = preferred.length > 0 ? preferred : rngShuffle(rng, pool)
+    for (const card of fillers) {
+      if (selected.length >= UPGRADE_CARDS_PER_TURN) { break }
+      if (!selected.includes(card.id)) { selected.push(card.id) }
+    }
   }
 
-  let lowestCount = Infinity
-  for (const card of options) {
-    if (counts[card.layer] < lowestCount) { lowestCount = counts[card.layer] }
+  while (selected.length < UPGRADE_CARDS_PER_TURN) {
+    const leftover = availableCards([...board.drafted, ...selected])
+    if (leftover.length === 0) { break }
+    selected.push(rngPick(rng, leftover).id)
   }
-  const balancingCards = options.filter(c => counts[c.layer] === lowestCount)
-  return rngPick(rng, balancingCards).id
+
+  return selected.slice(0, UPGRADE_CARDS_PER_TURN)
 }
 
 /**
- * Places every one of the bot's drafted cards that isn't already on the
- * board into its own layer. Trivial - a card can only ever go in its own
- * layer, so there's no real decision to make. Mutates the board.
- * @param {PlayerBoard} board - The bot's board.
+ * Places every unplaced selected card into its native layer.
+ * @param {PlayerBoard} board - Bot board.
  */
 function autoPlaceBotCards (board) {
-  const placedIds = new Set(LAYERS.flatMap(layer => board.layers[layer].map(slot => slot.cardId)))
-  for (const cardId of board.drafted) {
-    if (placedIds.has(cardId)) { continue }
-    const card = cardById(cardId)
-    if (card) { placeCard(board, cardId, card.layer) }
-  }
+  placeAllUnplacedCards(board)
 }
 
-export { chooseBotDraftPick, autoPlaceBotCards }
+export {
+  chooseBotInitialSelection,
+  chooseBotUpgradeSelection,
+  autoPlaceBotCards,
+  missingRequiredCards
+}

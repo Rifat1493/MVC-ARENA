@@ -1,208 +1,149 @@
 import FlowMatch from '@/flow-mode/engine/matchManager'
-import { DRAFT_PICKS } from '@/flow-mode/engine/constants'
-import { cardById } from '@/flow-mode/data/cards'
+import {
+  INITIAL_CARD_TOTAL,
+  UPGRADE_CARDS_PER_TURN,
+  ITERATIONS_PER_MATCH
+} from '@/flow-mode/engine/constants'
+import { validateInitialSelection } from '@/flow-mode/engine/selection'
 
-/** Fully drafts a human player by always picking the first offered option. */
-function draftAllFirstOption (match, playerId) {
-  while (match.draftState[playerId].pickIndex < DRAFT_PICKS) {
-    const cardId = match.draftState[playerId].options[0].id
-    match.pickDraftCard(playerId, cardId)
+const VALID_INITIAL = [
+  'controller-routing',
+  'controller-authentication',
+  'model-database',
+  'model-orm',
+  'view-web-view'
+]
+
+function selectInitial (match, playerId, cardIds = VALID_INITIAL) {
+  const state = match.selectionState[playerId]
+  state.selected = []
+  for (const id of cardIds) {
+    match.toggleSelectCard(playerId, id)
   }
+  return match.confirmSelection(playerId)
 }
 
-/** Places every drafted card for a human player into its native layer. */
-function buildAllCards (match, playerId) {
-  const board = match.players[playerId]
-  for (const cardId of [...board.drafted]) {
-    const alreadyPlaced = ['controller', 'model', 'view'].some(l =>
-      board.layers[l].some(s => s.cardId === cardId))
-    if (!alreadyPlaced) {
-      const card = cardById(cardId)
-      match.placeCard(playerId, cardId, card.layer)
+function playThroughIteration (match, humanIds = ['p1']) {
+  expect(match.phase).toEqual('useCase')
+  match.startSelect()
+  for (const playerId of humanIds) {
+    if (match.selectionState.mode === 'initial') {
+      selectInitial(match, playerId)
+    } else {
+      const owned = new Set(match.players[playerId].drafted)
+      const available = [
+        'controller-middleware', 'controller-authorization', 'controller-csrf-protection',
+        'controller-rate-limiting', 'model-caching', 'model-data-validation',
+        'model-file-storage-adapter', 'model-secrets-manager', 'view-mobile-view',
+        'view-cli-view', 'view-output-validation'
+      ].filter(id => !owned.has(id)).slice(0, UPGRADE_CARDS_PER_TURN)
+      for (const id of available) {
+        match.toggleSelectCard(playerId, id)
+      }
+      match.confirmSelection(playerId)
     }
   }
+  expect(match.phase).toEqual('build')
+  expect(match.bothBoardsComplete()).toBe(true)
+  match.runSimulation()
+  match.finishIteration()
+  expect(match.phase).toEqual('iterationSummary')
 }
 
-/** Runs the serve phase to completion. */
-function serveRound (match) {
-  while (match.serveState.currentIndex < match.currentRoundQueue.length) {
-    match.resolveNextRequest()
-  }
-}
-
-describe('FlowMatch - determinism', () => {
-  test('the same seed produces identical round queues and match results end to end', () => {
+describe('FlowMatch - schedule and determinism', () => {
+  test('same seed produces identical use-case schedules and end results', () => {
     const run = () => {
       const match = new FlowMatch({ player1Name: 'A', player2IsBot: true, seed: 12345 })
-      match.startForecast()
-      match.startDraft()
-      draftAllFirstOption(match, 'p1')
-      buildAllCards(match, 'p1')
-      match.startServe()
-      serveRound(match)
-      return { queue: match.roundHistory, result: match.isMatchOver() ? match.getMatchResult() : null }
+      match.startUseCasePhase()
+      const schedule = match.useCaseSchedule.map(uc => uc.id)
+      for (let i = 0; i < ITERATIONS_PER_MATCH; i++) {
+        playThroughIteration(match, ['p1'])
+        if (i < ITERATIONS_PER_MATCH - 1) {
+          match.continueAfterSummary()
+        } else {
+          match.getMatchResult()
+        }
+      }
+      return { schedule, result: match.matchResult, history: match.iterationHistory.length }
     }
-
-    const runA = run()
-    const runB = run()
-    expect(runA).toEqual(runB)
+    expect(run()).toEqual(run())
   })
 
-  test('different seeds produce different round queues', () => {
-    const matchA = new FlowMatch({ player1Name: 'A', player2IsBot: true, seed: 1 })
-    const matchB = new FlowMatch({ player1Name: 'A', player2IsBot: true, seed: 2 })
-    matchA.startForecast()
-    matchB.startForecast()
-    expect(matchA.currentRoundQueue).not.toEqual(matchB.currentRoundQueue)
+  test('schedules four unique use cases at construction', () => {
+    const match = new FlowMatch({ player1Name: 'A', player2IsBot: true, seed: 5 })
+    expect(match.useCaseSchedule).toHaveLength(4)
+    expect(new Set(match.useCaseSchedule.map(u => u.id)).size).toEqual(4)
   })
 })
 
-describe('FlowMatch - draft phase', () => {
-  test('bot drafts and auto-places all 5 cards instantly', () => {
+describe('FlowMatch - selection', () => {
+  test('bot selects and confirms instantly on startSelect', () => {
     const match = new FlowMatch({ player1Name: 'A', player2IsBot: true, seed: 1 })
-    match.startForecast()
-    match.startDraft()
-
-    expect(match.players.p2.drafted).toHaveLength(DRAFT_PICKS)
-    const placedCount = ['controller', 'model', 'view']
-      .reduce((sum, l) => sum + match.players.p2.layers[l].length, 0)
-    expect(placedCount).toEqual(DRAFT_PICKS)
+    match.startUseCasePhase()
+    match.startSelect()
+    expect(match.selectionState.p2.confirmed).toBe(true)
+    expect(match.players.p2.drafted).toHaveLength(INITIAL_CARD_TOTAL)
+    expect(validateInitialSelection(match.players.p2.drafted).ok).toBe(true)
   })
 
-  test('human drafting one at a time does not auto-place', () => {
+  test('human initial selection requires exact 2/2/1 before confirm and auto-places', () => {
     const match = new FlowMatch({ player1Name: 'A', player2IsBot: true, seed: 1 })
-    match.startForecast()
-    match.startDraft()
-
-    const firstCard = match.draftState.p1.options[0].id
-    match.pickDraftCard('p1', firstCard)
-
-    expect(match.players.p1.drafted).toEqual([firstCard])
-    const placedCount = ['controller', 'model', 'view']
-      .reduce((sum, l) => sum + match.players.p1.layers[l].length, 0)
-    expect(placedCount).toEqual(0)
-  })
-
-  test('rejects a pick that is not currently offered', () => {
-    const match = new FlowMatch({ player1Name: 'A', player2IsBot: true, seed: 1 })
-    match.startForecast()
-    match.startDraft()
-
-    const result = match.pickDraftCard('p1', 'not-an-offered-card')
-    expect(result.ok).toBe(false)
-  })
-
-  test('advances to build phase once both players finish drafting', () => {
-    const match = new FlowMatch({ player1Name: 'A', player2Name: 'B', seed: 1 })
-    match.startForecast()
-    match.startDraft()
-
-    draftAllFirstOption(match, 'p1')
-    draftAllFirstOption(match, 'p2')
-
+    match.startUseCasePhase()
+    match.startSelect()
+    match.toggleSelectCard('p1', 'controller-routing')
+    expect(match.confirmSelection('p1').ok).toBe(false)
+    selectInitial(match, 'p1')
+    expect(match.players.p1.drafted).toHaveLength(INITIAL_CARD_TOTAL)
     expect(match.phase).toEqual('build')
+    expect(match.bothBoardsComplete()).toBe(true)
+  })
+
+  test('upgrade forbids already-owned cards and adds exactly two', () => {
+    const match = new FlowMatch({ player1Name: 'A', player2IsBot: true, seed: 2 })
+    match.startUseCasePhase()
+    match.startSelect()
+    selectInitial(match, 'p1')
+    match.runSimulation()
+    match.finishIteration()
+    match.continueAfterSummary()
+    match.startSelect()
+
+    expect(match.selectionState.mode).toEqual('upgrade')
+    expect(match.toggleSelectCard('p1', match.players.p1.drafted[0]).ok).toBe(false)
+
+    const owned = new Set(match.players.p1.drafted)
+    const picks = ['view-mobile-view', 'model-caching'].filter(id => !owned.has(id))
+    for (const id of picks) { match.toggleSelectCard('p1', id) }
+    expect(match.confirmSelection('p1').ok).toBe(true)
+    expect(match.players.p1.drafted).toHaveLength(INITIAL_CARD_TOTAL + UPGRADE_CARDS_PER_TURN)
+    expect(match.bothBoardsComplete()).toBe(true)
   })
 })
 
-describe('FlowMatch - build phase', () => {
-  test('placeCard rejects placing a card in the wrong layer', () => {
-    const match = new FlowMatch({ player1Name: 'A', player2Name: 'B', seed: 1 })
-    match.startForecast()
-    match.startDraft()
-    draftAllFirstOption(match, 'p1')
-    draftAllFirstOption(match, 'p2')
+describe('FlowMatch - simulate and scoring', () => {
+  test('runSimulation returns fulfillment results for both players', () => {
+    const match = new FlowMatch({ player1Name: 'A', player2IsBot: true, seed: 3 })
+    match.startUseCasePhase()
+    match.startSelect()
+    selectInitial(match, 'p1')
+    const sim = match.runSimulation()
+    expect(sim.useCase).toBe(match.currentUseCase)
+    expect(['fulfilled', 'failed']).toContain(sim.resultP1.outcome)
+    expect(['fulfilled', 'failed']).toContain(sim.resultP2.outcome)
+  })
 
-    const controllerCardId = match.players.p1.drafted.find(id => cardById(id).layer === 'controller')
-    if (controllerCardId) {
-      const result = match.placeCard('p1', controllerCardId, 'model')
-      expect(result.ok).toBe(false)
+  test('four iterations end in a match result without sudden death', () => {
+    const match = new FlowMatch({ player1Name: 'A', player2IsBot: true, seed: 8 })
+    match.startUseCasePhase()
+    for (let i = 0; i < ITERATIONS_PER_MATCH; i++) {
+      playThroughIteration(match, ['p1'])
+      if (i < ITERATIONS_PER_MATCH - 1) {
+        match.continueAfterSummary()
+      }
     }
-  })
-})
-
-describe('FlowMatch - serve phase', () => {
-  test('both players are resolved against the identical request each step', () => {
-    const match = new FlowMatch({ player1Name: 'A', player2IsBot: true, seed: 7 })
-    match.startForecast()
-    match.startDraft()
-    draftAllFirstOption(match, 'p1')
-    buildAllCards(match, 'p1')
-    match.startServe()
-
-    const { request, resultP1, resultP2 } = match.resolveNextRequest()
-
-    expect(resultP1.requestId).toEqual(request.id)
-    expect(resultP2.requestId).toEqual(request.id)
-  })
-
-  test('an unblocked threat disables a card that stays disabled for the round', () => {
-    const match = new FlowMatch({ player1Name: 'A', player2Name: 'B', seed: 1 })
-    match.players.p1.drafted.push('model-database')
-    match.placeCard('p1', 'model-database', 'model')
-    match.currentRoundQueue = [
-      { id: 'r1-threat0', kind: 'threat', threatType: 'SQL_INJECTION', targetLayer: 'model' }
-    ]
-    match.startServe()
-
-    match.resolveNextRequest()
-
-    expect(match.players.p1.layers.model[0].disabled).toBe(true)
-  })
-
-  test('finishes the round and rolls score into matchScore after the last request', () => {
-    const match = new FlowMatch({ player1Name: 'A', player2Name: 'B', seed: 1 })
-    match.players.p1.drafted.push('controller-routing', 'model-database', 'view-web-view')
-    match.placeCard('p1', 'controller-routing', 'controller')
-    match.placeCard('p1', 'model-database', 'model')
-    match.placeCard('p1', 'view-web-view', 'view')
-    match.currentRoundQueue = [
-      { id: 'r1-data0', kind: 'data', route: 'Routing', dataDomain: 'Database', outputType: 'Web View' }
-    ]
-    match.startServe()
-
-    match.resolveNextRequest()
-
-    expect(match.phase).toEqual('roundSummary')
-    expect(match.players.p1.matchScore).toEqual(1)
-    expect(match.roundHistory).toHaveLength(1)
-  })
-})
-
-describe('FlowMatch - match result', () => {
-  test('declares the higher-scoring player the winner', () => {
-    const match = new FlowMatch({ player1Name: 'A', player2Name: 'B', seed: 1 })
-    match.players.p1.matchScore = 5
-    match.players.p2.matchScore = 3
-
     const result = match.getMatchResult()
-
-    expect(result.winnerId).toEqual('p1')
-    expect(result.reason).toEqual('score')
     expect(match.phase).toEqual('matchEnd')
-  })
-
-  test('caches the result on repeated calls', () => {
-    const match = new FlowMatch({ player1Name: 'A', player2Name: 'B', seed: 1 })
-    match.players.p1.matchScore = 5
-    const first = match.getMatchResult()
-    const second = match.getMatchResult()
-    expect(first).toBe(second)
-  })
-
-  test('runs bounded sudden death when tied and eventually resolves or draws', () => {
-    const match = new FlowMatch({ player1Name: 'A', player2Name: 'B', seed: 1 })
-    // both boards empty and equal - fully tied, forces sudden death to run its
-    // bounded course and settle on a draw since neither side can succeed.
-    const result = match.getMatchResult()
-
-    expect(['draw', 'suddenDeath']).toContain(result.reason)
-    expect(match.suddenDeath.active).toBe(true)
-    expect(match.suddenDeath.requestsPlayed).toBeGreaterThan(0)
-    expect(match.suddenDeath.requestsPlayed).toBeLessThanOrEqual(3)
-  })
-
-  test('isMatchOver is true once the single round has begun', () => {
-    const match = new FlowMatch({ player1Name: 'A', player2Name: 'B', seed: 1 })
-    expect(match.isMatchOver()).toBe(true)
+    expect(match.iterationHistory).toHaveLength(4)
+    expect(['score', 'requirements', 'draw']).toContain(result.reason)
   })
 })

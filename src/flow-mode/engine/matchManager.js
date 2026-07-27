@@ -1,26 +1,35 @@
 /**
- * `FlowMatch` orchestrates a full Flow Mode match: forecast, one-time
- * draft+build, then a single round of serve, ending in a match result (with
- * bounded sudden death if tied).
+ * `FlowMatch` orchestrates a full Flow Mode match: four use-case iterations
+ * where players build and improve an MVC system, then simulate request /
+ * response fulfilment against each use case's required cards.
  *
- * This class is the only stateful piece of the engine; every method it calls
- * out to (chain/threat resolution, scoring, bot strategy) is itself pure.
- * It has no DOM/Vue dependency - `FlowModePage.vue` holds an instance of it
- * in local component state and calls its methods in response to UI events.
+ * This class is the only stateful piece of the engine; helpers it calls are
+ * pure. It has no DOM/Vue dependency — `FlowModePage.vue` holds an instance
+ * and calls methods in response to UI events.
  *
  * @module flow-mode/engine/matchManager
  */
 
-import { PHASES, DRAFT_PICKS, ROUNDS_PER_MATCH, MAX_SUDDEN_DEATH_REQUESTS } from '@/flow-mode/engine/constants'
+import {
+  PHASES,
+  ITERATIONS_PER_MATCH,
+  INITIAL_CARD_TOTAL,
+  UPGRADE_CARDS_PER_TURN
+} from '@/flow-mode/engine/constants'
 import { createRng, randomSeed } from '@/flow-mode/engine/rng'
-import { createPlayerBoard, placeCard as placeCardOnBoard, applyDamage } from '@/flow-mode/engine/board'
-import { generateDraftPool } from '@/flow-mode/engine/draftPool'
-import { buildForecast } from '@/flow-mode/engine/forecast'
-import { buildRoundRequestQueue, buildSuddenDeathRequest } from '@/flow-mode/engine/requestQueue'
-import { resolveDataRequest } from '@/flow-mode/engine/chainResolution'
-import { resolveThreatRequest } from '@/flow-mode/engine/threatResolution'
-import { scoreRound, applyRoundScoreToMatch, determineMatchWinner, resolveSuddenDeathRequest } from '@/flow-mode/engine/scoring'
-import { chooseBotDraftPick, autoPlaceBotCards } from '@/flow-mode/engine/botStrategy'
+import { createPlayerBoard, placeCard as placeCardOnBoard, placeAllUnplacedCards } from '@/flow-mode/engine/board'
+import { buildUseCaseSchedule } from '@/flow-mode/engine/useCaseSchedule'
+import { resolveUseCase } from '@/flow-mode/engine/useCaseResolution'
+import { scoreIteration, applyIterationScoreToMatch, determineMatchWinner } from '@/flow-mode/engine/scoring'
+import {
+  chooseBotInitialSelection,
+  chooseBotUpgradeSelection,
+  autoPlaceBotCards
+} from '@/flow-mode/engine/botStrategy'
+import {
+  validateInitialSelection,
+  validateUpgradeSelection
+} from '@/flow-mode/engine/selection'
 
 /**
  * Orchestrates a Flow Mode match between two players (`p1`, optionally
@@ -38,167 +47,241 @@ class FlowMatch {
   constructor ({ player1Name, player2IsBot = false, player2Name = 'Bot', seed } = {}) {
     this.seed = seed !== undefined ? seed : randomSeed()
     this.rng = createRng(this.seed)
-    this.outcomeRngs = { p1: createRng(this.seed + 1), p2: createRng(this.seed + 2) }
 
     this.phase = PHASES.SETUP
-    this.roundNumber = 1
+    this.iterationNumber = 1
+    this.useCaseSchedule = buildUseCaseSchedule(this.rng)
+    this.currentUseCase = null
+
     this.players = {
       p1: createPlayerBoard('p1', player1Name, false),
       p2: createPlayerBoard('p2', player2Name, player2IsBot)
     }
-    this.currentRoundQueue = []
-    this.forecast = null
-    this.draftState = null
-    this.serveState = null
-    this.roundHistory = []
-    this.suddenDeath = { active: false, requestsPlayed: 0, results: [] }
+
+    this.selectionState = null
+    this.simulateState = null
+    this.iterationHistory = []
     this.matchResult = null
   }
 
   /**
-   * Builds this round's shared request queue and forecast. Called at the
-   * start of round 1 and again at the start of every subsequent round.
+   * Reveals the current iteration's use case and enters the useCase phase.
    */
-  startForecast () {
-    this.currentRoundQueue = buildRoundRequestQueue(this.rng, this.roundNumber)
-    this.forecast = buildForecast(this.currentRoundQueue)
-    this.phase = PHASES.FORECAST
+  startUseCasePhase () {
+    this.currentUseCase = this.useCaseSchedule[this.iterationNumber - 1]
+    this.phase = PHASES.USE_CASE
   }
 
   /**
-   * Begins the (once-per-match) draft. Bot players resolve all of their
-   * picks immediately; the human player proceeds via {@link pickDraftCard}.
+   * Begins card selection for the current iteration.
+   * Iteration 1 = initial 2/2/1. Iterations 2–4 = upgrade (+2).
+   * Bots resolve immediately.
    */
-  startDraft () {
-    this.phase = PHASES.DRAFT
-    this.draftState = {
-      p1: { pickIndex: 0, options: [] },
-      p2: { pickIndex: 0, options: [] }
+  startSelect () {
+    const mode = this.iterationNumber === 1 ? 'initial' : 'upgrade'
+    this.phase = PHASES.SELECT
+    this.selectionState = {
+      mode,
+      requiredCount: mode === 'initial' ? INITIAL_CARD_TOTAL : UPGRADE_CARDS_PER_TURN,
+      p1: { selected: [], confirmed: false },
+      p2: { selected: [], confirmed: false }
     }
-    this._dealNextDraftOptions('p1')
-    this._dealNextDraftOptions('p2')
-    if (this.players.p1.isBot) { this._runBotDraft('p1') }
-    if (this.players.p2.isBot) { this._runBotDraft('p2') }
-    this._maybeAdvancePastDraft()
+
+    if (this.players.p1.isBot) { this._runBotSelect('p1') }
+    if (this.players.p2.isBot) { this._runBotSelect('p2') }
+    this._maybeAdvancePastSelect()
   }
 
   /**
-   * Records a human player's draft pick and deals their next 3-card offer,
-   * or finishes their draft if it was their 5th pick.
+   * Toggles a card in the active human player's pending selection.
    * @param {string} playerId - 'p1' | 'p2'.
-   * @param {string} cardId - The id of the card being picked (must be one of
-   * the currently offered options).
-   * @return {{ok: bool, reason: (string|undefined)}} Whether the pick was valid.
+   * @param {string} cardId - Card to toggle.
+   * @return {{ok: bool, reason: (string|undefined)}} Whether the toggle applied.
    */
-  pickDraftCard (playerId, cardId) {
-    const state = this.draftState[playerId]
-    if (!state || !state.options.some(c => c.id === cardId)) {
-      return { ok: false, reason: 'That card is not currently offered.' }
+  toggleSelectCard (playerId, cardId) {
+    if (this.phase !== PHASES.SELECT) {
+      return { ok: false, reason: 'Not in selection phase.' }
+    }
+    const state = this.selectionState[playerId]
+    if (!state || state.confirmed) {
+      return { ok: false, reason: 'Selection already confirmed.' }
+    }
+    if (this.players[playerId].isBot) {
+      return { ok: false, reason: 'Bot selections are automatic.' }
     }
 
-    this.players[playerId].drafted.push(cardId)
-    state.pickIndex++
-    if (state.pickIndex < DRAFT_PICKS) {
-      this._dealNextDraftOptions(playerId)
-    } else {
-      state.options = []
+    const index = state.selected.indexOf(cardId)
+    if (index >= 0) {
+      state.selected.splice(index, 1)
+      return { ok: true }
     }
 
-    this._maybeAdvancePastDraft()
+    if (this.selectionState.mode === 'upgrade') {
+      if (this.players[playerId].drafted.includes(cardId)) {
+        return { ok: false, reason: 'That card is already in your system.' }
+      }
+    }
+
+    if (state.selected.length >= this.selectionState.requiredCount) {
+      return {
+        ok: false,
+        reason: `You can only select ${this.selectionState.requiredCount} cards right now.`
+      }
+    }
+
+    state.selected.push(cardId)
     return { ok: true }
   }
 
   /**
-   * Enters the build phase. Bots have already auto-placed their cards during
-   * {@link startDraft}; the human player places theirs via {@link placeCard}.
+   * Confirms the player's current selection if it meets the quotas.
+   * @param {string} playerId - 'p1' | 'p2'.
+   * @return {{ok: bool, reason: (string|undefined)}} Whether confirm succeeded.
    */
-  startBuild () {
-    this.phase = PHASES.BUILD
+  confirmSelection (playerId) {
+    if (this.phase !== PHASES.SELECT) {
+      return { ok: false, reason: 'Not in selection phase.' }
+    }
+    const state = this.selectionState[playerId]
+    if (!state || state.confirmed) {
+      return { ok: false, reason: 'Nothing to confirm.' }
+    }
+
+    const board = this.players[playerId]
+    const validation = this.selectionState.mode === 'initial'
+      ? validateInitialSelection(state.selected)
+      : validateUpgradeSelection(state.selected, board.drafted)
+
+    if (!validation.ok) { return validation }
+
+    for (const cardId of state.selected) {
+      board.drafted.push(cardId)
+    }
+    state.confirmed = true
+    this._maybeAdvancePastSelect()
+    return { ok: true }
   }
 
   /**
-   * Places a drafted card into a layer column on the given player's board.
+   * Enters the build/review phase and auto-places every selected card into its
+   * native MVC layer (no manual dragging — layer membership is fixed per card).
+   */
+  startBuild () {
+    this.phase = PHASES.BUILD
+    for (const playerId of ['p1', 'p2']) {
+      autoPlaceBotCards(this.players[playerId])
+    }
+  }
+
+  /**
+   * Places a selected card into a layer column.
    * @param {string} playerId - 'p1' | 'p2'.
-   * @param {string} cardId - The card to place.
-   * @param {string} layer - The layer to place it in.
-   * @return {{ok: bool, reason: (string|undefined)}} Whether the placement succeeded.
+   * @param {string} cardId - Card to place.
+   * @param {string} layer - Target layer.
+   * @return {{ok: bool, reason: (string|undefined)}} Placement result.
    */
   placeCard (playerId, cardId, layer) {
     return placeCardOnBoard(this.players[playerId], cardId, layer)
   }
 
   /**
-   * Enters the serve phase for the current round, resetting per-round serve
-   * tracking.
+   * Auto-places any remaining unplaced cards for a human who is ready.
+   * @param {string} playerId - 'p1' | 'p2'.
    */
-  startServe () {
-    this.phase = PHASES.SERVE
-    this.serveState = { currentIndex: 0, results: { p1: [], p2: [] } }
+  autoPlaceRemaining (playerId) {
+    placeAllUnplacedCards(this.players[playerId])
   }
 
   /**
-   * Resolves the next request in the current round's queue against both
-   * players' boards, applies any resulting damage, and updates live round
-   * scores. Automatically finishes the round after the 5th request.
-   * @return {{request: Object, resultP1: Object, resultP2: Object}} The
-   * resolved request and each player's outcome.
+   * True when every drafted card for the player is on the board.
+   * @param {string} playerId - 'p1' | 'p2'.
+   * @return {bool} Whether the board is fully built.
    */
-  resolveNextRequest () {
-    const index = this.serveState.currentIndex
-    const request = this.currentRoundQueue[index]
+  isBoardComplete (playerId) {
+    const board = this.players[playerId]
+    const placed = new Set(
+      ['controller', 'model', 'view'].flatMap(l => board.layers[l].map(s => s.cardId)))
+    return board.drafted.every(id => placed.has(id))
+  }
 
-    const resultP1 = this._resolveForPlayer('p1', request)
-    const resultP2 = this._resolveForPlayer('p2', request)
+  /**
+   * True when both players have fully placed their selected cards.
+   * @return {bool} Whether serve/simulate may begin.
+   */
+  bothBoardsComplete () {
+    return this.isBoardComplete('p1') && this.isBoardComplete('p2')
+  }
 
-    this.serveState.results.p1.push(resultP1)
-    this.serveState.results.p2.push(resultP2)
-    this.serveState.currentIndex++
+  /**
+   * Resolves the current use case for both players and records scores.
+   * @return {{useCase: UseCase, resultP1: Object, resultP2: Object}} Simulation payload.
+   */
+  runSimulation () {
+    this.phase = PHASES.SIMULATE
+    const resultP1 = resolveUseCase(this.players.p1, this.currentUseCase)
+    const resultP2 = resolveUseCase(this.players.p2, this.currentUseCase)
 
-    this.players.p1.roundScore = scoreRound(this.players.p1, this.serveState.results.p1).roundScore
-    this.players.p2.roundScore = scoreRound(this.players.p2, this.serveState.results.p2).roundScore
+    this.simulateState = { resultP1, resultP2, scored: false }
 
-    if (this.serveState.currentIndex >= this.currentRoundQueue.length) {
-      this._finishRound()
+    return { useCase: this.currentUseCase, resultP1, resultP2 }
+  }
+
+  /**
+   * Applies iteration scores and moves to the iteration summary phase.
+   * Safe to call once after the simulation animation finishes.
+   */
+  finishIteration () {
+    if (!this.simulateState || this.simulateState.scored) { return }
+
+    const scoreP1 = scoreIteration(this.simulateState.resultP1)
+    const scoreP2 = scoreIteration(this.simulateState.resultP2)
+    applyIterationScoreToMatch(this.players.p1, scoreP1)
+    applyIterationScoreToMatch(this.players.p2, scoreP2)
+
+    this.iterationHistory.push({
+      iterationNumber: this.iterationNumber,
+      useCaseId: this.currentUseCase.id,
+      useCaseTitle: this.currentUseCase.title,
+      p1: { ...scoreP1, result: this.simulateState.resultP1 },
+      p2: { ...scoreP2, result: this.simulateState.resultP2 }
+    })
+
+    this.simulateState.scored = true
+    this.phase = PHASES.ITERATION_SUMMARY
+  }
+
+  /**
+   * Continues from the iteration summary: reveal the next use case first
+   * (players upgrade only after acknowledging it), or end the match.
+   */
+  continueAfterSummary () {
+    if (this.iterationNumber >= ITERATIONS_PER_MATCH) {
+      this.getMatchResult()
+      return
     }
-
-    return { request, resultP1, resultP2 }
+    this.iterationNumber++
+    this.simulateState = null
+    this.selectionState = null
+    this.startUseCasePhase()
   }
 
   /**
-   * True once the (only) round has been played.
-   * @return {bool} True if there are no more rounds to play.
+   * True once all four iterations have been played.
+   * @return {bool} Whether the match has no more iterations.
    */
   isMatchOver () {
-    return this.roundNumber >= ROUNDS_PER_MATCH
+    return this.iterationNumber >= ITERATIONS_PER_MATCH &&
+      this.phase === PHASES.ITERATION_SUMMARY &&
+      this.iterationHistory.length >= ITERATIONS_PER_MATCH
   }
 
   /**
-   * Determines (and caches) the match result, running a bounded sudden-death
-   * loop if the match is tied after the regular rounds.
+   * Determines (and caches) the match result.
    * @return {{winnerId: (string|null), reason: string}} The match result.
    */
   getMatchResult () {
     if (this.matchResult) { return this.matchResult }
-
-    let result = determineMatchWinner(this.players.p1, this.players.p2)
-    let attempts = 0
-    while (result.winnerId === null && attempts < MAX_SUDDEN_DEATH_REQUESTS) {
-      this.suddenDeath.active = true
-      const request = buildSuddenDeathRequest(this.rng, attempts)
-      const outcome = resolveSuddenDeathRequest(
-        this.players.p1, this.players.p2, request, this.outcomeRngs.p1, this.outcomeRngs.p2)
-      this.suddenDeath.results.push(outcome)
-      this.suddenDeath.requestsPlayed++
-      attempts++
-      if (outcome.decided) {
-        result = { winnerId: outcome.winnerId, reason: 'suddenDeath' }
-      }
-    }
-    if (result.winnerId === null) {
-      result = { winnerId: null, reason: 'draw' }
-    }
-
-    this.matchResult = result
+    this.matchResult = determineMatchWinner(this.players.p1, this.players.p2)
     this.phase = PHASES.MATCH_END
     return this.matchResult
   }
@@ -206,59 +289,26 @@ class FlowMatch {
   // --- internal helpers -----------------------------------------------
 
   /** @private */
-  _dealNextDraftOptions (playerId) {
-    const state = this.draftState[playerId]
-    if (state.pickIndex >= DRAFT_PICKS) {
-      state.options = []
-      return
-    }
-    state.options = generateDraftPool(this.rng, this.players[playerId].drafted)
-  }
-
-  /** @private */
-  _runBotDraft (playerId) {
+  _runBotSelect (playerId) {
     const board = this.players[playerId]
-    const state = this.draftState[playerId]
-    while (state.pickIndex < DRAFT_PICKS) {
-      const cardId = chooseBotDraftPick(this.rng, state.options, board, this.forecast)
+    const state = this.selectionState[playerId]
+    const picks = this.selectionState.mode === 'initial'
+      ? chooseBotInitialSelection(this.rng, board, this.currentUseCase)
+      : chooseBotUpgradeSelection(this.rng, board, this.currentUseCase)
+
+    state.selected = picks.slice()
+    for (const cardId of picks) {
       board.drafted.push(cardId)
-      state.pickIndex++
-      this._dealNextDraftOptions(playerId)
     }
-    autoPlaceBotCards(board)
+    state.confirmed = true
   }
 
   /** @private */
-  _maybeAdvancePastDraft () {
-    const p1Done = this.draftState.p1.pickIndex >= DRAFT_PICKS
-    const p2Done = this.draftState.p2.pickIndex >= DRAFT_PICKS
-    if (p1Done && p2Done) {
+  _maybeAdvancePastSelect () {
+    if (!this.selectionState) { return }
+    if (this.selectionState.p1.confirmed && this.selectionState.p2.confirmed) {
       this.startBuild()
     }
-  }
-
-  /** @private */
-  _resolveForPlayer (playerId, request) {
-    const board = this.players[playerId]
-    if (request.kind === 'data') {
-      return resolveDataRequest(board, request)
-    }
-    const result = resolveThreatRequest(board, request, this.outcomeRngs[playerId])
-    if (result.damagedCardId) {
-      applyDamage(board, request.targetLayer, result.damagedCardId)
-    }
-    return result
-  }
-
-  /** @private */
-  _finishRound () {
-    const scoreP1 = scoreRound(this.players.p1, this.serveState.results.p1)
-    const scoreP2 = scoreRound(this.players.p2, this.serveState.results.p2)
-    applyRoundScoreToMatch(this.players.p1, scoreP1)
-    applyRoundScoreToMatch(this.players.p2, scoreP2)
-
-    this.roundHistory.push({ roundNumber: this.roundNumber, p1: scoreP1, p2: scoreP2 })
-    this.phase = PHASES.ROUND_SUMMARY
   }
 }
 

@@ -14,15 +14,23 @@ describe('MatchEndModal', () => {
     expect(wrapper.find('#match-end-modal').exists()).toBe(false)
   })
 
-  test('shows the winner\'s display name and reason', () => {
+  test('shows the winner and score reason', () => {
     const wrapper = mount(MatchEndModal, {
       props: { matchResult: { winnerId: 'p1', reason: 'score' }, players, showing: true }
     })
     expect(wrapper.text()).toContain('Alice wins!')
-    expect(wrapper.text()).toContain('Highest score')
+    expect(wrapper.text()).toContain('Most use cases fulfilled')
   })
 
-  test('shows a draw message when there is no winner', () => {
+  test('shows requirements tiebreaker text', () => {
+    const wrapper = mount(MatchEndModal, {
+      props: { matchResult: { winnerId: 'p2', reason: 'requirements' }, players, showing: true }
+    })
+    expect(wrapper.text()).toContain('Bot wins!')
+    expect(wrapper.text()).toContain('required cards')
+  })
+
+  test('shows a draw message', () => {
     const wrapper = mount(MatchEndModal, {
       props: { matchResult: { winnerId: null, reason: 'draw' }, players, showing: true }
     })

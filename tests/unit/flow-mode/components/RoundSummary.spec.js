@@ -1,42 +1,62 @@
 import { mount } from '@vue/test-utils'
 import RoundSummary from '@/flow-mode/components/RoundSummary'
+import { useCaseById } from '@/flow-mode/data/useCases'
 
 describe('RoundSummary', () => {
-  const roundResult = {
-    p1: { served: 2, blocked: 1, penetrated: 0, roundScore: 3 },
-    p2: { served: 1, blocked: 0, penetrated: 1, roundScore: 1 }
+  const useCase = useCaseById('mobile-login')
+  const iterationResult = {
+    p1: {
+      fulfilled: true,
+      fulfilledRequirements: 4,
+      totalRequirements: 4,
+      iterationScore: 1,
+      result: { explanation: 'Fulfilled securely.' }
+    },
+    p2: {
+      fulfilled: false,
+      fulfilledRequirements: 2,
+      totalRequirements: 4,
+      iterationScore: 0,
+      result: { explanation: 'Missing ORM.' }
+    }
   }
   const cumulativeScores = [
-    { playerId: 'p1', displayName: 'Alice', matchScore: 3 },
+    { playerId: 'p1', displayName: 'Alice', matchScore: 2 },
     { playerId: 'p2', displayName: 'Bot', matchScore: 1 }
   ]
 
-  test('renders both players\' round results by display name', () => {
+  test('reveals security risk and required cards after simulation', () => {
     const wrapper = mount(RoundSummary, {
-      props: { roundNumber: 1, roundResult, cumulativeScores, nextLabel: 'Continue to Hotfix' }
+      props: {
+        iterationNumber: 1,
+        useCaseTitle: useCase.title,
+        useCase,
+        iterationResult,
+        cumulativeScores,
+        nextLabel: 'Next Use Case'
+      }
     })
-
-    expect(wrapper.text()).toContain('Round 1 Complete')
-    expect(wrapper.text()).toContain('Alice')
-    expect(wrapper.text()).toContain('Served: 2')
-    expect(wrapper.text()).toContain('Breached: 0')
-    expect(wrapper.text()).toContain('+3 pts')
-    expect(wrapper.text()).toContain('Bot')
-    expect(wrapper.text()).toContain('3 total')
+    expect(wrapper.text()).toContain('Iteration 1 Complete')
+    expect(wrapper.text()).toContain(useCase.title)
+    expect(wrapper.text()).toContain(useCase.securityRisk)
+    expect(wrapper.text()).toContain('Authentication')
+    expect(wrapper.text()).toContain('Mobile View')
+    expect(wrapper.text()).toContain('Fulfilled')
+    expect(wrapper.text()).toContain('Failed')
   })
 
-  test('uses the given nextLabel on the continue button', () => {
+  test('emits continue', async () => {
     const wrapper = mount(RoundSummary, {
-      props: { roundNumber: 1, roundResult, cumulativeScores, nextLabel: 'Continue to Hotfix' }
-    })
-    expect(wrapper.find('button').text()).toEqual('Continue to Hotfix')
-  })
-
-  test('emits continue when the button is clicked', async () => {
-    const wrapper = mount(RoundSummary, {
-      props: { roundNumber: 1, roundResult, cumulativeScores, nextLabel: 'Next' }
+      props: {
+        iterationNumber: 1,
+        useCase,
+        iterationResult,
+        cumulativeScores,
+        nextLabel: 'See Result'
+      }
     })
     await wrapper.find('button').trigger('click')
     expect(wrapper.emitted('continue')).toHaveLength(1)
+    expect(wrapper.find('button').text()).toEqual('See Result')
   })
 })

@@ -26,98 +26,98 @@
     />
 
     <template v-else>
-      <forecast-banner
-        v-if="match.phase === 'forecast'"
-        :forecast="match.forecast"
-        :round-number="match.roundNumber"
-        @continue="onForecastContinue"
+      <use-case-banner
+        v-if="phase === 'useCase'"
+        :use-case="match.currentUseCase"
+        :iteration-number="match.iterationNumber"
+        :total-iterations="totalIterations"
+        :is-upgrade="match.iterationNumber > 1"
+        :continue-label="match.iterationNumber === 1 ? 'Select Cards' : 'Continue to Upgrade'"
+        @continue="onUseCaseContinue"
       />
 
       <div
-        v-else-if="match.phase === 'draft'"
-        class="flow-mode-split"
+        v-else-if="phase === 'select'"
+        class="flow-mode-select"
       >
         <div
-          v-for="playerId in ['p1', 'p2']"
-          :key="playerId"
+          v-if="match.currentUseCase"
+          class="flow-mode-select-usecase"
         >
-          <draft-picker
-            v-if="playerId === activeDraftPlayerId"
-            :player-name="match.players[playerId].displayName"
-            :options="match.draftState[playerId].options"
-            :pick-number="Math.min(match.draftState[playerId].pickIndex + 1, draftPicks)"
-            :picks-remaining="draftPicks - match.draftState[playerId].pickIndex"
-            :already-drafted="resolvedCards(match.players[playerId].drafted)"
-            @pick="cardId => match.pickDraftCard(playerId, cardId)"
-          />
-          <div
-            v-else
-            class="flow-mode-hidden-panel"
-          >
-            <p class="flow-mode-hidden-title">
-              {{ match.players[playerId].displayName }}
-            </p>
-            <p class="flow-mode-hidden-note">
-              {{ hiddenDraftMessage(playerId) }}
-            </p>
-          </div>
+          <p class="flow-mode-select-usecase-label">
+            {{ match.selectionState.mode === 'upgrade' ? 'Upgrade for this use case' : 'Building for this use case' }}
+          </p>
+          <h3 class="flow-mode-select-usecase-title">
+            {{ match.currentUseCase.title }}
+          </h3>
+          <p class="flow-mode-select-usecase-desc">
+            {{ match.currentUseCase.description }}
+          </p>
         </div>
-      </div>
-
-      <div
-        v-else-if="match.phase === 'build'"
-        class="flow-mode-build"
-      >
         <div class="flow-mode-split">
           <div
             v-for="playerId in ['p1', 'p2']"
             :key="playerId"
           >
+            <card-selector
+              v-if="playerId === activeSelectPlayerId"
+              :player-name="match.players[playerId].displayName"
+              :mode="match.selectionState.mode"
+              :selected-ids="match.selectionState[playerId].selected"
+              :owned-ids="ownedIdsForSelect(playerId)"
+              :use-case="match.currentUseCase"
+              @toggle="cardId => onToggleSelect(playerId, cardId)"
+              @confirm="onConfirmSelect(playerId)"
+            />
             <div
-              v-if="!match.players[playerId].isBot"
-              class="flow-mode-hand"
+              v-else
+              class="flow-mode-hidden-panel"
             >
-              <span
-                v-if="unplacedCards(playerId).length"
-                class="flow-mode-hand-label"
-              >Drag your cards onto the matching lane below:</span>
-              <span
-                v-else
-                class="flow-mode-hand-label"
-              >All cards placed.</span>
-              <div class="flow-mode-hand-cards">
-                <card-chip
-                  v-for="card in unplacedCards(playerId)"
-                  :key="card.id"
-                  :card="card"
-                  :draggable="true"
-                  size="sm"
-                />
-              </div>
+              <p class="flow-mode-hidden-title">
+                {{ match.players[playerId].displayName }}
+              </p>
+              <p class="flow-mode-hidden-note">
+                {{ hiddenSelectMessage(playerId) }}
+              </p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-else-if="phase === 'build'"
+        class="flow-mode-build"
+      >
+        <p class="flow-mode-build-hint">
+          Your cards are placed automatically in their MVC layers. Review the systems, then simulate the use case.
+        </p>
+        <div class="flow-mode-split">
+          <div
+            v-for="playerId in ['p1', 'p2']"
+            :key="playerId"
+          >
             <layer-board
               :player-name="match.players[playerId].displayName + (match.players[playerId].isBot ? ' (Bot)' : '')"
               :layers="resolvedLayers(playerId)"
-              :interactive="!match.players[playerId].isBot"
-              @drop-card="payload => onDropCard(playerId, payload)"
+              :interactive="false"
             />
           </div>
         </div>
         <button
           class="btn btn-success flow-mode-continue"
-          @click="startServePhase"
+          @click="startSimulatePhase"
         >
-          Continue to Serve
+          Simulate Request / Response
         </button>
       </div>
 
-      <template v-else-if="match.phase === 'serve' || (match.phase === 'roundSummary' && showServeAnimation)">
+      <template v-else-if="phase === 'simulate' || (phase === 'iterationSummary' && showSimulateAnimation)">
         <div
-          v-if="currentRequestData"
+          v-if="currentSimulation"
           class="flow-mode-request-banner"
-          :class="{ 'flow-mode-request-banner-threat': currentRequestData.request.kind === 'threat' }"
+          :class="{ 'flow-mode-request-banner-threat': hasFailure }"
         >
-          {{ currentRequestSummary }}
+          {{ currentSimulationSummary }}
         </div>
         <div class="flow-mode-split">
           <div
@@ -128,24 +128,31 @@
               {{ match.players[playerId].displayName }}
             </h4>
             <request-pipeline
-              v-if="currentRequestData"
-              :request="currentRequestData.request"
-              :result="playerId === 'p1' ? currentRequestData.resultP1 : currentRequestData.resultP2"
+              v-if="currentSimulation"
+              :use-case="currentSimulation.useCase"
+              :result="playerId === 'p1' ? currentSimulation.resultP1 : currentSimulation.resultP2"
               :stop-index="pipelineStopIndex"
             />
           </div>
         </div>
         <score-board
           :players="scoreBoardPlayers"
-          :round-number="match.roundNumber"
-          :total-rounds="totalRounds"
+          :iteration-number="match.iterationNumber"
+          :total-iterations="totalIterations"
         />
         <button
+          v-if="!pipelineAnimating"
           class="btn btn-success flow-mode-continue"
-          @click="onServeButtonClick"
+          @click="onSimulateContinue"
         >
-          {{ serveButtonLabel }}
+          Continue
         </button>
+        <p
+          v-else
+          class="flow-mode-simulating"
+        >
+          Simulating request / response… watch where the flow succeeds or fails.
+        </p>
 
         <div class="flow-mode-split flow-mode-serve-boards">
           <div
@@ -162,18 +169,20 @@
       </template>
 
       <round-summary
-        v-else-if="match.phase === 'roundSummary'"
-        :round-number="match.roundNumber"
-        :round-result="lastRoundResult"
+        v-else-if="phase === 'iterationSummary'"
+        :iteration-number="match.iterationNumber"
+        :use-case-title="lastIterationTitle"
+        :use-case="lastIterationUseCase"
+        :iteration-result="lastIterationResult"
         :cumulative-scores="scoreBoardPlayers.map(p => ({ playerId: p.playerId, displayName: p.displayName, matchScore: p.matchScore }))"
-        next-label="See Result"
-        @continue="onRoundSummaryContinue"
+        :next-label="match.iterationNumber >= totalIterations ? 'See Result' : 'See Next Use Case'"
+        @continue="onIterationSummaryContinue"
       />
 
       <match-end-modal
         :match-result="match.matchResult || { winnerId: null, reason: 'draw' }"
         :players="matchEndPlayers"
-        :showing="match.phase === 'matchEnd'"
+        :showing="phase === 'matchEnd'"
         @rematch="onRematch"
         @exit="exitToHome"
       />
@@ -183,42 +192,31 @@
 
 <script>
 import FlowMatch from '@/flow-mode/engine/matchManager'
-import { DRAFT_PICKS, ROUNDS_PER_MATCH } from '@/flow-mode/engine/constants'
+import { ITERATIONS_PER_MATCH, SIMULATION_DURATION_MS } from '@/flow-mode/engine/constants'
 import { computeStops, computeHaltIndex } from '@/flow-mode/engine/pipelineStops'
 import { cardById } from '@/flow-mode/data/cards'
 import { takePendingSetup } from '@/flow-mode/pendingSetup'
 
 import FlowSetup from '@/flow-mode/components/FlowSetup'
-import ForecastBanner from '@/flow-mode/components/ForecastBanner'
-import DraftPicker from '@/flow-mode/components/DraftPicker'
+import UseCaseBanner from '@/flow-mode/components/UseCaseBanner'
+import CardSelector from '@/flow-mode/components/CardSelector'
 import LayerBoard from '@/flow-mode/components/LayerBoard'
-import CardChip from '@/flow-mode/components/CardChip'
 import RequestPipeline from '@/flow-mode/components/RequestPipeline'
 import ScoreBoard from '@/flow-mode/components/ScoreBoard'
 import RoundSummary from '@/flow-mode/components/RoundSummary'
 import MatchEndModal from '@/flow-mode/components/MatchEndModal'
 
 /**
- * Flow Mode's router-mounted entry point. Owns the {@link FlowMatch} instance
- * and every phase's transition logic locally (no Vuex), rendering whichever
- * child components match the match's current phase and forwarding their
- * events into `FlowMatch` method calls.
- *
- * @vue-data {FlowMatch|null} match - The active match, or null before setup.
- * @vue-data {bool} skipAnimation - When true, each new request jumps straight
- * to its final outcome instead of starting from the first pipeline stop.
- * @vue-data {int} pipelineStopIndex - How far the player has manually
- * advanced the current request's pipeline (via the "Next Step" button),
- * shared by both players' `RequestPipeline`s.
+ * Flow Mode entry point. Owns the {@link FlowMatch} instance and phase UI
+ * for the four-iteration use-case redesign.
  */
 export default {
   name: 'FlowModePage',
   components: {
     'flow-setup': FlowSetup,
-    'forecast-banner': ForecastBanner,
-    'draft-picker': DraftPicker,
+    'use-case-banner': UseCaseBanner,
+    'card-selector': CardSelector,
     'layer-board': LayerBoard,
-    'card-chip': CardChip,
     'request-pipeline': RequestPipeline,
     'score-board': ScoreBoard,
     'round-summary': RoundSummary,
@@ -227,58 +225,43 @@ export default {
   data () {
     return {
       match: null,
+      matchRev: 0,
       skipAnimation: false,
-      currentRequestData: null,
+      currentSimulation: null,
       pipelineStopIndex: 0,
-      draftPicks: DRAFT_PICKS,
-      totalRounds: ROUNDS_PER_MATCH
+      pipelineAnimating: false,
+      pipelineTimer: null,
+      totalIterations: ITERATIONS_PER_MATCH
     }
   },
   computed: {
-    /**
-     * True while there is a request on screen to show the Serve UI for
-     * (keeps it showing for the round's final request even after the engine
-     * has already advanced `match.phase` to 'roundSummary', until the player
-     * clicks past it).
-     */
-    showServeAnimation () {
-      return this.currentRequestData !== null
+    /** Bumped after engine mutations so templates re-read match state. */
+    phase () {
+      void this.matchRev
+      return this.match ? this.match.phase : null
     },
-    /**
-     * The furthest stop either player's pipeline can reach for the current
-     * request - once `pipelineStopIndex` reaches this, both pipelines have
-     * shown their full outcome and the player can move on.
-     */
+    showSimulateAnimation () {
+      return this.currentSimulation !== null
+    },
     pipelineMaxHaltIndex () {
-      if (!this.currentRequestData) { return 0 }
-      const { request, resultP1, resultP2 } = this.currentRequestData
-      const haltP1 = computeHaltIndex(computeStops(request, resultP1), request, resultP1)
-      const haltP2 = computeHaltIndex(computeStops(request, resultP2), request, resultP2)
+      if (!this.currentSimulation) { return 0 }
+      const { useCase, resultP1, resultP2 } = this.currentSimulation
+      const stops = computeStops(useCase)
+      const haltP1 = computeHaltIndex(stops, useCase, resultP1)
+      const haltP2 = computeHaltIndex(stops, useCase, resultP2)
       return Math.max(haltP1, haltP2)
     },
-    /** Label for the button under the pipelines, reflecting what the next click will do. */
-    serveButtonLabel () {
-      if (this.pipelineStopIndex < this.pipelineMaxHaltIndex) { return 'Next Step ▶' }
-      return this.match.phase === 'serve' ? 'Next Request ▶' : 'Continue'
+    currentSimulationSummary () {
+      if (!this.currentSimulation) { return '' }
+      return `Simulating: ${this.currentSimulation.useCase.title}`
     },
-    /**
-     * A plain-language description of what's currently traveling the
-     * pipeline, so a player can relate the abstract Request/Controller/
-     * Model/View animation to a concrete thing: which route/domain/output a
-     * data request needs, or which threat is attacking which layer.
-     */
-    currentRequestSummary () {
-      if (!this.currentRequestData) { return '' }
-      const { request } = this.currentRequestData
-      if (request.kind === 'data') {
-        return `Data Request needs: ${request.route} → ${request.dataDomain} → ${request.outputType}`
-      }
-      const layerLabels = { controller: 'Controller', model: 'Model', view: 'View' }
-      const threatLabels = { SQL_INJECTION: 'SQL Injection', XSS: 'XSS', SESSION_FORGERY: 'Session Forgery' }
-      const threatLabel = threatLabels[request.threatType] || request.threatType
-      return `⚠ Threat: ${threatLabel} attacking the ${layerLabels[request.targetLayer]} layer`
+    hasFailure () {
+      if (!this.currentSimulation) { return false }
+      return this.currentSimulation.resultP1.outcome === 'failed' ||
+        this.currentSimulation.resultP2.outcome === 'failed'
     },
     scoreBoardPlayers () {
+      void this.matchRev
       return ['p1', 'p2'].map(playerId => {
         const board = this.match.players[playerId]
         return {
@@ -286,13 +269,25 @@ export default {
           displayName: board.displayName,
           roundScore: board.roundScore,
           matchScore: board.matchScore,
-          penetrations: board.penetrations
+          requirementsFulfilled: board.requirementsFulfilled || 0
         }
       })
     },
-    lastRoundResult () {
-      const entry = this.match.roundHistory[this.match.roundHistory.length - 1]
+    lastIterationResult () {
+      void this.matchRev
+      const entry = this.match.iterationHistory[this.match.iterationHistory.length - 1]
       return entry ? { p1: entry.p1, p2: entry.p2 } : { p1: {}, p2: {} }
+    },
+    lastIterationTitle () {
+      void this.matchRev
+      const entry = this.match.iterationHistory[this.match.iterationHistory.length - 1]
+      return entry ? entry.useCaseTitle : ''
+    },
+    lastIterationUseCase () {
+      void this.matchRev
+      const entry = this.match.iterationHistory[this.match.iterationHistory.length - 1]
+      if (!entry || !this.match) { return null }
+      return this.match.useCaseSchedule.find(uc => uc.id === entry.useCaseId) || null
     },
     matchEndPlayers () {
       return ['p1', 'p2'].map(playerId => (
@@ -300,162 +295,145 @@ export default {
       ))
     },
     /**
-     * Which human player's draft picker is currently shown. Human players
-     * draft one at a time (p1 first) so an opponent's picks are never on
-     * screen while you're still making your own - they only become visible
-     * once you've finished drafting too (in the Build phase). Bots resolve
-     * their whole draft instantly during `startDraft()`, so they're never
-     * "active" here; a bot-vs-human match always shows the human alone.
-     * @return {string|null} 'p1' | 'p2', or null if both have finished
-     * (a brief transitional state right before the phase moves to 'build').
+     * Which human player's selector is shown. Humans select one at a time
+     * (p1 first) so opponent picks stay hidden.
      */
-    activeDraftPlayerId () {
-      if (!this.match.draftState) { return null }
+    activeSelectPlayerId () {
+      void this.matchRev
+      if (!this.match || !this.match.selectionState) { return null }
       for (const playerId of ['p1', 'p2']) {
         const board = this.match.players[playerId]
-        const state = this.match.draftState[playerId]
-        if (!board.isBot && state.pickIndex < this.draftPicks) {
+        const state = this.match.selectionState[playerId]
+        if (!board.isBot && !state.confirmed) {
           return playerId
         }
       }
       return null
     }
   },
+  watch: {
+    skipAnimation (skip) {
+      if (skip && this.currentSimulation && this.pipelineAnimating) {
+        this.finishPipelineAnimation()
+      }
+    }
+  },
   created () {
-    // Reuses the players already set up on the Home page (see Home.vue's
-    // playFlow()) instead of asking again: Home hands them off via
-    // setPendingSetup() rather than the route (so the URL stays a plain
-    // /flow) since Flow Mode intentionally keeps its match state out of
-    // Vuex. Falls back to the FlowSetup form for direct navigation (e.g. a
-    // bookmarked/refreshed /flow URL) where there's no pending setup to read.
     const setup = takePendingSetup()
     if (setup) {
       this.onStart(setup)
     }
   },
+  beforeUnmount () {
+    this.clearPipelineTimer()
+  },
   methods: {
-    /**
-     * Starts a new match from the FlowSetup form.
-     * @param {Object} setup - `{ player1Name, player2IsBot, player2Name }`.
-     */
-    onStart (setup) {
-      this.match = new FlowMatch(setup)
-      this.match.startForecast()
+    /** Notify Vue that FlowMatch internal state changed. */
+    bumpMatch () {
+      this.matchRev++
     },
-    /**
-     * Resolves a card id list into full card definitions (for template display).
-     * @param {string[]} cardIds - The ids to resolve.
-     * @return {FlowCard[]} The resolved cards.
-     */
-    resolvedCards (cardIds) {
-      return cardIds.map(cardById)
-    },
-    /**
-     * The placeholder message shown in place of a player's draft panel while
-     * they're not the active drafter (see {@link activeDraftPlayerId}).
-     * @param {string} playerId - 'p1' | 'p2'.
-     * @return {string} The message to display.
-     */
-    hiddenDraftMessage (playerId) {
-      const board = this.match.players[playerId]
-      if (board.isBot) { return 'Drafted automatically - hidden until the build phase.' }
-      if (board.drafted.length >= this.draftPicks) {
-        return 'Drafting complete - hidden until you finish your own picks.'
+    clearPipelineTimer () {
+      if (this.pipelineTimer) {
+        clearInterval(this.pipelineTimer)
+        this.pipelineTimer = null
       }
-      return 'Waiting for their turn to draft.'
     },
-    /**
-     * Returns a player's drafted cards that have not yet been placed onto
-     * their board, so the Build phase can show them as a draggable hand.
-     * Without this, a human player who just finished drafting has nothing
-     * visible to drag - their board looks empty next to a bot's, which
-     * auto-places its cards immediately during Draft.
-     * @param {string} playerId - 'p1' | 'p2'.
-     * @return {FlowCard[]} The unplaced drafted cards.
-     */
-    unplacedCards (playerId) {
+    finishPipelineAnimation () {
+      this.clearPipelineTimer()
+      this.pipelineStopIndex = this.pipelineMaxHaltIndex
+      this.pipelineAnimating = false
+    },
+    startPipelineAnimation () {
+      this.clearPipelineTimer()
+      const halt = this.pipelineMaxHaltIndex
+      if (this.skipAnimation || halt <= 0) {
+        this.pipelineStopIndex = halt
+        this.pipelineAnimating = false
+        return
+      }
+      this.pipelineStopIndex = 0
+      this.pipelineAnimating = true
+      const intervalMs = SIMULATION_DURATION_MS / halt
+      this.pipelineTimer = setInterval(() => {
+        if (this.pipelineStopIndex >= this.pipelineMaxHaltIndex) {
+          this.finishPipelineAnimation()
+          return
+        }
+        this.pipelineStopIndex++
+        if (this.pipelineStopIndex >= this.pipelineMaxHaltIndex) {
+          this.finishPipelineAnimation()
+        }
+      }, intervalMs)
+    },
+    onStart (setup) {
+      const match = new FlowMatch(setup)
+      match.startUseCasePhase()
+      this.match = match
+      this.bumpMatch()
+    },
+    ownedIdsForSelect (playerId) {
+      void this.matchRev
+      return this.match.players[playerId].drafted.slice()
+    },
+    hiddenSelectMessage (playerId) {
+      void this.matchRev
       const board = this.match.players[playerId]
-      const placedIds = new Set(
-        ['controller', 'model', 'view'].flatMap(layer => board.layers[layer].map(slot => slot.cardId)))
-      return board.drafted.filter(id => !placedIds.has(id)).map(cardById)
+      const state = this.match.selectionState[playerId]
+      if (board.isBot) { return 'Selected automatically — hidden until systems are revealed.' }
+      if (state.confirmed) {
+        return 'Selection complete — hidden until you finish your own picks.'
+      }
+      return 'Waiting for their turn to select cards.'
     },
-    /**
-     * Resolves a player's raw board layers (card ids + disabled flags) into
-     * full card definitions for LayerBoard.
-     * @param {string} playerId - 'p1' | 'p2'.
-     * @return {Object} `{ controller: [{card, disabled}], model: [...], view: [...] }`.
-     */
     resolvedLayers (playerId) {
+      void this.matchRev
       const layers = this.match.players[playerId].layers
       const resolve = slots => slots.map(slot => ({ card: cardById(slot.cardId), disabled: slot.disabled }))
       return { controller: resolve(layers.controller), model: resolve(layers.model), view: resolve(layers.view) }
     },
-    /**
-     * Handles the forecast banner's continue: moves into the (once-per-match) draft.
-     */
-    onForecastContinue () {
-      this.match.startDraft()
+    onUseCaseContinue () {
+      this.match.startSelect()
+      this.bumpMatch()
     },
-    /**
-     * Handles a card being dropped onto a layer column during Build.
-     * @param {string} playerId - 'p1' | 'p2'.
-     * @param {{cardId: string, layer: string}} payload - The dropped card and target layer.
-     */
-    onDropCard (playerId, { cardId, layer }) {
-      this.match.placeCard(playerId, cardId, layer)
+    onToggleSelect (playerId, cardId) {
+      this.match.toggleSelectCard(playerId, cardId)
+      this.bumpMatch()
     },
-    /**
-     * Enters the serve phase and resolves the first request.
-     */
-    startServePhase () {
-      this.match.startServe()
-      this.advanceServe()
+    onConfirmSelect (playerId) {
+      this.match.confirmSelection(playerId)
+      this.bumpMatch()
     },
-    /**
-     * Resolves the next queued request and resets the pipeline step so both
-     * players' pipelines start from Request again - or, if "Skip to result"
-     * is on, jumps straight to each pipeline's final outcome.
-     */
-    advanceServe () {
-      this.currentRequestData = this.match.resolveNextRequest()
-      this.pipelineStopIndex = this.skipAnimation ? this.pipelineMaxHaltIndex : 0
-    },
-    /**
-     * Handles a click on the button under the pipelines. While the current
-     * request hasn't fully played out, advances one stop. Once both
-     * pipelines have reached their outcome, either resolves the next request
-     * (mid-round) or closes out the Serve view so the round summary shows
-     * (end of round).
-     */
-    onServeButtonClick () {
-      if (this.pipelineStopIndex < this.pipelineMaxHaltIndex) {
-        this.pipelineStopIndex++
-        return
-      }
-      if (this.match.phase === 'serve') {
-        this.advanceServe()
-      } else {
-        this.currentRequestData = null
-      }
-    },
-    /**
-     * Handles the round summary's continue: finalizes the (single-round) match.
-     */
-    onRoundSummaryContinue () {
-      this.match.getMatchResult()
-    },
-    /**
-     * Resets back to the setup screen for a rematch.
-     */
-    onRematch () {
-      this.match = null
-      this.currentRequestData = null
+    startSimulatePhase () {
+      this.currentSimulation = this.match.runSimulation()
       this.pipelineStopIndex = 0
+      this.pipelineAnimating = false
+      this.bumpMatch()
+      this.$nextTick(() => {
+        this.startPipelineAnimation()
+      })
     },
-    /**
-     * Leaves Flow Mode and returns to the Home page.
-     */
+    onSimulateContinue () {
+      if (this.pipelineAnimating) { return }
+      this.clearPipelineTimer()
+      this.match.finishIteration()
+      this.currentSimulation = null
+      this.pipelineStopIndex = 0
+      this.bumpMatch()
+    },
+    onIterationSummaryContinue () {
+      this.match.continueAfterSummary()
+      this.bumpMatch()
+    },
+    onRematch () {
+      this.clearPipelineTimer()
+      this.match = null
+      this.currentSimulation = null
+      this.pipelineStopIndex = 0
+      this.pipelineAnimating = false
+      this.matchRev = 0
+    },
     exitToHome () {
+      this.clearPipelineTimer()
       this.$router.push('/')
     }
   }
@@ -492,6 +470,43 @@ export default {
   gap: 0.3rem;
 }
 
+.flow-mode-select {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.flow-mode-select-usecase {
+  max-width: 48rem;
+  width: calc(100% - 2rem);
+  margin: 1rem auto 0;
+  padding: 1rem 1.2rem;
+  background: #1f3a5f;
+  border: 2px solid #6fa8ff;
+  border-radius: 0.6rem;
+  text-align: center;
+}
+
+.flow-mode-select-usecase-label {
+  margin: 0 0 0.3rem;
+  color: #ffc46b;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.flow-mode-select-usecase-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.15rem;
+}
+
+.flow-mode-select-usecase-desc {
+  margin: 0;
+  color: #d7e6ff;
+  font-size: 0.9rem;
+}
+
 .flow-mode-split {
   display: flex;
   gap: 2rem;
@@ -513,7 +528,7 @@ export default {
 }
 
 .flow-mode-request-banner {
-  max-width: 42rem;
+  max-width: 48rem;
   margin: 0.5rem auto 0;
   padding: 0.6rem 1.2rem;
   border-radius: 0.5rem;
@@ -536,31 +551,21 @@ export default {
   align-items: center;
 }
 
+.flow-mode-build-hint {
+  color: #ffc46b;
+  margin: 1rem 1rem 0;
+  text-align: center;
+}
+
 .flow-mode-continue {
   margin: 0.5rem 0 1rem;
 }
 
-.flow-mode-hand {
-  background: #222222;
-  border: solid white 0.15rem;
-  border-radius: 0.5rem;
-  padding: 0.8rem;
-  margin-bottom: 0.8rem;
-  text-align: center;
-}
-
-.flow-mode-hand-label {
-  display: block;
-  font-size: 0.85rem;
+.flow-mode-simulating {
+  margin: 0.8rem 0 1rem;
   color: #ffc46b;
-  margin-bottom: 0.6rem;
-}
-
-.flow-mode-hand-cards {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.6rem;
+  font-weight: 700;
+  text-align: center;
 }
 
 .flow-mode-serve-boards {

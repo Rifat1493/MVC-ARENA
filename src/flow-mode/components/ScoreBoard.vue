@@ -1,7 +1,7 @@
 <template>
   <div id="score-board">
     <div class="score-board-round">
-      Round {{ roundNumber }} / {{ totalRounds }}
+      Iteration {{ iterationNumber }} / {{ totalIterations }}
     </div>
     <div
       v-for="player in players"
@@ -9,29 +9,28 @@
       class="score-row"
     >
       <span class="score-name">{{ player.displayName }}</span>
-      <span class="score-value">Round: {{ player.roundScore }}</span>
-      <span class="score-value score-total">Total: {{ player.matchScore }}</span>
-      <span class="score-value score-penetrations">Breaches: {{ player.penetrations }}</span>
+      <span class="score-value">This: {{ player.roundScore }}</span>
+      <span class="score-value score-total">Fulfilled: {{ player.matchScore }}</span>
+      <span class="score-value score-requirements">Reqs: {{ player.requirementsFulfilled }}</span>
     </div>
   </div>
 </template>
 
 <script>
 /**
- * Displays each player's round and cumulative score plus their breach
- * (unblocked threat) count, used both as a tiebreaker and a "how safe is
- * your board" indicator.
+ * Displays each player's current-iteration and cumulative fulfilled use-case
+ * scores plus requirements covered (tiebreaker).
  *
- * @vue-prop {Object[]} players - `[{ displayName, roundScore, matchScore, penetrations }]`.
- * @vue-prop {int} roundNumber - The current round number.
- * @vue-prop {int} totalRounds - Total rounds in the match.
+ * @vue-prop {Object[]} players - `[{ displayName, roundScore, matchScore, requirementsFulfilled }]`.
+ * @vue-prop {int} iterationNumber - The current iteration number.
+ * @vue-prop {int} totalIterations - Total iterations in the match.
  */
 export default {
   name: 'ScoreBoard',
   props: {
     players: { type: Array, required: true },
-    roundNumber: { type: Number, required: true },
-    totalRounds: { type: Number, required: true }
+    iterationNumber: { type: Number, required: true },
+    totalIterations: { type: Number, required: true }
   }
 }
 </script>
@@ -69,7 +68,7 @@ export default {
   color: #8bff8b;
 }
 
-.score-penetrations {
-  color: #ff8b8b;
+.score-requirements {
+  color: #6fa8ff;
 }
 </style>

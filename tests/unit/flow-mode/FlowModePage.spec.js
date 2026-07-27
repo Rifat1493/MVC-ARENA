@@ -1,22 +1,27 @@
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import FlowModePage from '@/flow-mode/FlowModePage'
-import { cardById } from '@/flow-mode/data/cards'
-import { DRAFT_PICKS } from '@/flow-mode/engine/constants'
+import {
+  INITIAL_CARD_TOTAL,
+  UPGRADE_CARDS_PER_TURN,
+  ITERATIONS_PER_MATCH
+} from '@/flow-mode/engine/constants'
 import { setPendingSetup } from '@/flow-mode/pendingSetup'
 
-/** Drafts all 5 picks for a human player by always taking the first offer. */
-function draftAll (match, playerId) {
-  while (match.draftState[playerId].pickIndex < DRAFT_PICKS) {
-    match.pickDraftCard(playerId, match.draftState[playerId].options[0].id)
-  }
-}
+const VALID_INITIAL = [
+  'controller-routing',
+  'controller-authentication',
+  'model-database',
+  'model-orm',
+  'view-web-view'
+]
 
-/** Places every drafted card for a player into its native layer. */
-function buildAll (match, playerId) {
-  for (const cardId of [...match.players[playerId].drafted]) {
-    match.placeCard(playerId, cardId, cardById(cardId).layer)
+function selectInitial (match, playerId, cardIds = VALID_INITIAL) {
+  match.selectionState[playerId].selected = []
+  for (const id of cardIds) {
+    match.toggleSelectCard(playerId, id)
   }
+  match.confirmSelection(playerId)
 }
 
 describe('FlowModePage', () => {
@@ -37,264 +42,153 @@ describe('FlowModePage', () => {
     expect(wrapper.findComponent({ name: 'FlowSetup' }).exists()).toBe(true)
   })
 
-  test('auto-starts using the players handed off via setPendingSetup, skipping FlowSetup', () => {
-    setPendingSetup({ player1Name: 'Alice', player2IsBot: false, player2Name: 'Bob' })
-    const wrapper = mountPage()
-
-    expect(wrapper.findComponent({ name: 'FlowSetup' }).exists()).toBe(false)
-    expect(wrapper.vm.match).not.toBeNull()
-    expect(wrapper.vm.match.players.p1.displayName).toEqual('Alice')
-    expect(wrapper.vm.match.players.p2.displayName).toEqual('Bob')
-    expect(wrapper.vm.match.players.p2.isBot).toBe(false)
-  })
-
-  test('auto-starts with a bot player 2 when player2IsBot is true', () => {
+  test('auto-starts using pending setup and opens the first use case', () => {
     setPendingSetup({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
     const wrapper = mountPage()
-
-    expect(wrapper.vm.match.players.p2.isBot).toBe(true)
+    expect(wrapper.findComponent({ name: 'FlowSetup' }).exists()).toBe(false)
+    expect(wrapper.vm.match.phase).toEqual('useCase')
+    expect(wrapper.vm.match.players.p1.displayName).toEqual('Alice')
+    expect(wrapper.findComponent({ name: 'UseCaseBanner' }).exists()).toBe(true)
   })
 
-  test('starting a match builds the first forecast', () => {
+  test('use-case continue enters select; bot finishes instantly', async () => {
     const wrapper = mountPage()
     wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
-
-    expect(wrapper.vm.match).not.toBeNull()
-    expect(wrapper.vm.match.phase).toEqual('forecast')
-    expect(wrapper.vm.match.forecast).not.toBeNull()
+    wrapper.vm.onUseCaseContinue()
+    await nextTick()
+    expect(wrapper.vm.match.phase).toEqual('select')
+    expect(wrapper.vm.match.players.p2.drafted).toHaveLength(INITIAL_CARD_TOTAL)
+    expect(wrapper.findComponent({ name: 'CardSelector' }).exists()).toBe(true)
   })
 
-  test('forecast continue on round 1 goes to draft; the bot finishes instantly', () => {
+  test('confirming human selection advances to build with cards auto-placed', async () => {
     const wrapper = mountPage()
     wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
-
-    wrapper.vm.onForecastContinue()
-
-    expect(wrapper.vm.match.phase).toEqual('draft')
-    expect(wrapper.vm.match.players.p2.drafted).toHaveLength(DRAFT_PICKS)
-  })
-
-  test('completing both players\' drafts advances to build', () => {
-    const wrapper = mountPage()
-    wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
-    wrapper.vm.onForecastContinue()
-
-    draftAll(wrapper.vm.match, 'p1')
-
+    wrapper.vm.onUseCaseContinue()
+    selectInitial(wrapper.vm.match, 'p1')
+    wrapper.vm.bumpMatch()
+    await nextTick()
     expect(wrapper.vm.match.phase).toEqual('build')
+    expect(wrapper.vm.match.bothBoardsComplete()).toBe(true)
   })
 
-  test('dropping a card in build calls placeCard through the engine', () => {
+  test('simulate phase auto-animates then continue finishes the iteration', async () => {
     const wrapper = mountPage()
+    wrapper.vm.skipAnimation = true
     wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
-    wrapper.vm.onForecastContinue()
-    draftAll(wrapper.vm.match, 'p1')
+    wrapper.vm.onUseCaseContinue()
+    selectInitial(wrapper.vm.match, 'p1')
+    wrapper.vm.startSimulatePhase()
+    await nextTick()
+    expect(wrapper.vm.match.phase).toEqual('simulate')
+    expect(wrapper.vm.currentSimulation).not.toBeNull()
+    expect(wrapper.vm.pipelineAnimating).toBe(false)
+    expect(wrapper.vm.pipelineStopIndex).toEqual(wrapper.vm.pipelineMaxHaltIndex)
+    expect(wrapper.findComponent({ name: 'RequestPipeline' }).exists()).toBe(true)
 
-    const cardId = wrapper.vm.match.players.p1.drafted[0]
-    const layer = cardById(cardId).layer
-    wrapper.vm.onDropCard('p1', { cardId, layer })
-
-    expect(wrapper.vm.match.players.p1.layers[layer].map(s => s.cardId)).toContain(cardId)
+    wrapper.vm.onSimulateContinue()
+    await nextTick()
+    expect(wrapper.vm.match.phase).toEqual('iterationSummary')
+    expect(wrapper.vm.currentSimulation).toBeNull()
+    expect(wrapper.findComponent({ name: 'RoundSummary' }).text()).toContain('Security risk')
   })
 
-  test('unplacedCards shows a just-drafted human\'s hand until each card is placed', () => {
+  test('playing all four iterations reaches match end', async () => {
     const wrapper = mountPage()
-    wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
-    wrapper.vm.onForecastContinue()
-    draftAll(wrapper.vm.match, 'p1')
+    wrapper.vm.skipAnimation = true
+    wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot', seed: 11 })
 
-    // Right after drafting, all 5 drafted cards are unplaced (this is what
-    // the human drags from - previously nothing showed here at all).
-    expect(wrapper.vm.unplacedCards('p1')).toHaveLength(5)
-
-    const cardId = wrapper.vm.match.players.p1.drafted[0]
-    const layer = cardById(cardId).layer
-    wrapper.vm.onDropCard('p1', { cardId, layer })
-
-    expect(wrapper.vm.unplacedCards('p1').map(c => c.id)).not.toContain(cardId)
-    expect(wrapper.vm.unplacedCards('p1')).toHaveLength(4)
-  })
-
-  test('the bot has nothing left unplaced once it finishes drafting (it auto-places instantly)', () => {
-    const wrapper = mountPage()
-    wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
-    wrapper.vm.onForecastContinue()
-
-    expect(wrapper.vm.unplacedCards('p2')).toHaveLength(0)
-  })
-
-  test('currentRequestSummary describes a data request by its route/domain/output', () => {
-    const wrapper = mountPage()
-    wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
-    wrapper.vm.currentRequestData = {
-      request: { kind: 'data', route: 'Routing', dataDomain: 'Database', outputType: 'Web View' },
-      resultP1: {}, resultP2: {}
+    for (let i = 0; i < ITERATIONS_PER_MATCH; i++) {
+      wrapper.vm.onUseCaseContinue()
+      if (wrapper.vm.match.selectionState.mode === 'initial') {
+        selectInitial(wrapper.vm.match, 'p1')
+      } else {
+        const owned = new Set(wrapper.vm.match.players.p1.drafted)
+        const picks = [
+          'controller-middleware', 'controller-authorization', 'controller-csrf-protection',
+          'controller-rate-limiting', 'model-caching', 'model-data-validation',
+          'model-file-storage-adapter', 'model-secrets-manager', 'view-mobile-view',
+          'view-cli-view', 'view-output-validation'
+        ].filter(id => !owned.has(id)).slice(0, UPGRADE_CARDS_PER_TURN)
+        for (const id of picks) {
+          wrapper.vm.match.toggleSelectCard('p1', id)
+        }
+        wrapper.vm.match.confirmSelection('p1')
+      }
+      wrapper.vm.startSimulatePhase()
+      await nextTick()
+      wrapper.vm.onSimulateContinue()
+      wrapper.vm.onIterationSummaryContinue()
     }
 
-    expect(wrapper.vm.currentRequestSummary).toEqual('Data Request needs: Routing → Database → Web View')
+    await nextTick()
+    expect(wrapper.vm.match.phase).toEqual('matchEnd')
+    expect(wrapper.vm.match.iterationHistory).toHaveLength(4)
+    expect(wrapper.findComponent({ name: 'MatchEndModal' }).exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'MatchEndModal' }).props('showing')).toBe(true)
   })
 
-  test('currentRequestSummary names the threat type and the layer it targets', () => {
+  test('after an iteration, next step is the new use case before upgrade select', async () => {
+    const wrapper = mountPage()
+    wrapper.vm.skipAnimation = true
+    wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
+    wrapper.vm.onUseCaseContinue()
+    selectInitial(wrapper.vm.match, 'p1')
+    wrapper.vm.startSimulatePhase()
+    await nextTick()
+    wrapper.vm.onSimulateContinue()
+    await nextTick()
+
+    expect(wrapper.vm.match.phase).toEqual('iterationSummary')
+    wrapper.vm.onIterationSummaryContinue()
+    await nextTick()
+
+    expect(wrapper.vm.match.phase).toEqual('useCase')
+    expect(wrapper.vm.match.iterationNumber).toEqual(2)
+    expect(wrapper.findComponent({ name: 'UseCaseBanner' }).exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'UseCaseBanner' }).props('isUpgrade')).toBe(true)
+    expect(wrapper.findComponent({ name: 'CardSelector' }).exists()).toBe(false)
+
+    wrapper.vm.onUseCaseContinue()
+    await nextTick()
+    expect(wrapper.vm.match.phase).toEqual('select')
+    expect(wrapper.vm.match.selectionState.mode).toEqual('upgrade')
+    expect(wrapper.text()).toContain('Upgrade for this use case')
+  })
+
+  test('auto pipeline advances over about 30 seconds', async () => {
+    jest.useFakeTimers()
     const wrapper = mountPage()
     wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
-    wrapper.vm.currentRequestData = {
-      request: { kind: 'threat', threatType: 'SQL_INJECTION', targetLayer: 'model' },
-      resultP1: {}, resultP2: {}
-    }
+    wrapper.vm.onUseCaseContinue()
+    selectInitial(wrapper.vm.match, 'p1')
+    wrapper.vm.startSimulatePhase()
+    await nextTick()
 
-    expect(wrapper.vm.currentRequestSummary).toEqual('⚠ Threat: SQL Injection attacking the Model layer')
+    expect(wrapper.vm.pipelineAnimating).toBe(true)
+    expect(wrapper.vm.pipelineStopIndex).toEqual(0)
+
+    const halt = wrapper.vm.pipelineMaxHaltIndex
+    jest.advanceTimersByTime(30000)
+    await nextTick()
+
+    expect(wrapper.vm.pipelineStopIndex).toEqual(halt)
+    expect(wrapper.vm.pipelineAnimating).toBe(false)
+    wrapper.vm.clearPipelineTimer()
+    jest.useRealTimers()
   })
 
-  test('currentRequestSummary is empty before any request has been resolved', () => {
+  test('rematch clears the match back to setup', () => {
     const wrapper = mountPage()
     wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
-
-    expect(wrapper.vm.currentRequestSummary).toEqual('')
+    wrapper.vm.onRematch()
+    expect(wrapper.vm.match).toBeNull()
+    expect(wrapper.findComponent({ name: 'FlowSetup' }).exists()).toBe(true)
   })
 
-  test('exitToHome navigates to the home route', () => {
+  test('exitToHome navigates home', () => {
     const wrapper = mountPage()
     wrapper.vm.exitToHome()
     expect(stubRouter.push).toHaveBeenCalledWith('/')
-  })
-
-  test('the serve button steps through a request, then moves to the next one', () => {
-    const wrapper = mountPage()
-    wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
-    wrapper.vm.onForecastContinue()
-    draftAll(wrapper.vm.match, 'p1')
-    buildAll(wrapper.vm.match, 'p1')
-
-    wrapper.vm.startServePhase()
-    const firstRequestId = wrapper.vm.currentRequestData.request.id
-    expect(wrapper.vm.pipelineStopIndex).toEqual(0)
-
-    // Step through the first request one click at a time.
-    while (wrapper.vm.pipelineStopIndex < wrapper.vm.pipelineMaxHaltIndex) {
-      wrapper.vm.onServeButtonClick()
-    }
-    expect(wrapper.vm.currentRequestData.request.id).toEqual(firstRequestId)
-
-    // One more click moves on to the next request and resets the step.
-    wrapper.vm.onServeButtonClick()
-    expect(wrapper.vm.pipelineStopIndex).toEqual(0)
-    expect(wrapper.vm.currentRequestData.request.id).not.toEqual(firstRequestId)
-  })
-
-  test('shows both players\' card stacks below the serve button during serve', async () => {
-    const wrapper = mountPage()
-    wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
-    wrapper.vm.onForecastContinue()
-    draftAll(wrapper.vm.match, 'p1')
-    buildAll(wrapper.vm.match, 'p1')
-
-    wrapper.vm.startServePhase()
-    await nextTick()
-
-    const boards = wrapper.findAllComponents({ name: 'LayerBoard' })
-    expect(boards).toHaveLength(2)
-    expect(boards[0].props('playerName')).toContain('Alice')
-    expect(boards[1].props('playerName')).toContain('Bot')
-    expect(boards[0].props('interactive')).toBe(false)
-  })
-
-  test('"Skip to result" jumps each new request straight to its outcome', () => {
-    const wrapper = mountPage()
-    wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
-    wrapper.vm.skipAnimation = true
-    wrapper.vm.onForecastContinue()
-    draftAll(wrapper.vm.match, 'p1')
-    buildAll(wrapper.vm.match, 'p1')
-
-    wrapper.vm.startServePhase()
-
-    expect(wrapper.vm.pipelineStopIndex).toEqual(wrapper.vm.pipelineMaxHaltIndex)
-  })
-
-  test('clicking through all 5 requests reaches roundSummary', () => {
-    const wrapper = mountPage()
-    wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
-    wrapper.vm.skipAnimation = true
-    wrapper.vm.onForecastContinue()
-    draftAll(wrapper.vm.match, 'p1')
-    buildAll(wrapper.vm.match, 'p1')
-
-    wrapper.vm.startServePhase()
-    // With skipAnimation on, every request starts already at its halt point,
-    // so one click per request is enough to move through all 5.
-    for (let i = 0; i < 5; i++) {
-      wrapper.vm.onServeButtonClick()
-    }
-
-    expect(wrapper.vm.match.phase).toEqual('roundSummary')
-    expect(wrapper.vm.match.roundHistory).toHaveLength(1)
-    expect(wrapper.vm.currentRequestData).toBeNull()
-  })
-
-  test('round summary continue finalizes the (single-round) match', () => {
-    const wrapper = mountPage()
-    wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
-    wrapper.vm.onForecastContinue()
-    draftAll(wrapper.vm.match, 'p1')
-    buildAll(wrapper.vm.match, 'p1')
-    wrapper.vm.match.startServe()
-    while (wrapper.vm.match.serveState.currentIndex < wrapper.vm.match.currentRoundQueue.length) {
-      wrapper.vm.match.resolveNextRequest()
-    }
-    expect(wrapper.vm.match.phase).toEqual('roundSummary')
-
-    wrapper.vm.onRoundSummaryContinue()
-
-    expect(wrapper.vm.match.phase).toEqual('matchEnd')
-    expect(wrapper.vm.match.matchResult).not.toBeNull()
-  })
-
-  test('rematch resets back to the setup screen', () => {
-    const wrapper = mountPage()
-    wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
-
-    wrapper.vm.onRematch()
-
-    expect(wrapper.vm.match).toBeNull()
-    expect(wrapper.vm.pipelineStopIndex).toEqual(0)
-  })
-
-  describe('activeDraftPlayerId / hidden opponent picks', () => {
-    test('p1 is active first when both players are human', () => {
-      const wrapper = mountPage()
-      wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: false, player2Name: 'Bea' })
-      wrapper.vm.onForecastContinue()
-
-      expect(wrapper.vm.activeDraftPlayerId).toEqual('p1')
-    })
-
-    test('p2 becomes active once p1 finishes drafting', () => {
-      const wrapper = mountPage()
-      wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: false, player2Name: 'Bea' })
-      wrapper.vm.onForecastContinue()
-
-      draftAll(wrapper.vm.match, 'p1')
-
-      expect(wrapper.vm.activeDraftPlayerId).toEqual('p2')
-    })
-
-    test('a bot player 2 is never active - p1 is the sole active drafter', () => {
-      const wrapper = mountPage()
-      wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
-      wrapper.vm.onForecastContinue()
-
-      expect(wrapper.vm.activeDraftPlayerId).toEqual('p1')
-    })
-
-    test('hiddenDraftMessage distinguishes a bot from a still-drafting human', () => {
-      const wrapper = mountPage()
-      wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: false, player2Name: 'Bea' })
-      wrapper.vm.onForecastContinue()
-
-      expect(wrapper.vm.hiddenDraftMessage('p2')).toMatch(/waiting/i)
-
-      draftAll(wrapper.vm.match, 'p1')
-      expect(wrapper.vm.hiddenDraftMessage('p1')).toMatch(/complete/i)
-    })
   })
 })

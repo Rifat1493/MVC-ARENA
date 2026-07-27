@@ -1,80 +1,54 @@
-import { chooseBotDraftPick, autoPlaceBotCards } from '@/flow-mode/engine/botStrategy'
-import { createPlayerBoard, placeCard } from '@/flow-mode/engine/board'
 import { createRng } from '@/flow-mode/engine/rng'
+import { createPlayerBoard } from '@/flow-mode/engine/board'
+import {
+  chooseBotInitialSelection,
+  chooseBotUpgradeSelection,
+  autoPlaceBotCards
+} from '@/flow-mode/engine/botStrategy'
+import { useCaseById } from '@/flow-mode/data/useCases'
+import { countSelectedByLayer, validateInitialSelection, validateUpgradeSelection } from '@/flow-mode/engine/selection'
+import { INITIAL_CARD_TOTAL, UPGRADE_CARDS_PER_TURN } from '@/flow-mode/engine/constants'
 import { cardById } from '@/flow-mode/data/cards'
 
-describe('chooseBotDraftPick', () => {
-  test('prioritizes a needed guard when the forecast flags its threat', () => {
+describe('botStrategy', () => {
+  const useCase = useCaseById('mobile-login')
+
+  test('initial selection is a valid 2/2/1 and prefers required cards', () => {
     const board = createPlayerBoard('p2', 'Bot', true)
-    const options = [cardById('controller-routing'), cardById('model-orm'), cardById('model-caching')]
-    const forecast = { threatTypesPresent: ['SQL_INJECTION'] }
-
-    const pick = chooseBotDraftPick(createRng(1), options, board, forecast)
-
-    expect(pick).toEqual('model-orm')
+    const picks = chooseBotInitialSelection(createRng(7), board, useCase)
+    expect(picks).toHaveLength(INITIAL_CARD_TOTAL)
+    expect(validateInitialSelection(picks).ok).toBe(true)
+    const requiredChosen = useCase.requiredCardIds.filter(id => picks.includes(id))
+    expect(requiredChosen.length).toBeGreaterThan(0)
+    expect(countSelectedByLayer(picks)).toEqual({ controller: 2, model: 2, view: 1 })
   })
 
-  test('does not re-pick a guard it already has', () => {
+  test('upgrade selection picks exactly two unowned cards and prefers missing requirements', () => {
     const board = createPlayerBoard('p2', 'Bot', true)
-    board.drafted.push('model-orm')
-    const options = [cardById('controller-routing'), cardById('model-orm'), cardById('model-caching')]
-    const forecast = { threatTypesPresent: ['SQL_INJECTION'] }
-
-    const pick = chooseBotDraftPick(createRng(1), options, board, forecast)
-
-    expect(pick).not.toEqual('model-orm')
+    board.drafted = [
+      'controller-routing',
+      'controller-middleware',
+      'model-database',
+      'model-caching',
+      'view-web-view'
+    ]
+    const picks = chooseBotUpgradeSelection(createRng(3), board, useCase)
+    expect(picks).toHaveLength(UPGRADE_CARDS_PER_TURN)
+    expect(validateUpgradeSelection(picks, board.drafted).ok).toBe(true)
+    // Authentication and Mobile View are still missing for mobile-login
+    expect(picks).toEqual(expect.arrayContaining([
+      'controller-authentication',
+      'view-mobile-view'
+    ]))
   })
 
-  test('prefers filling an empty layer over a layer it already has cards in', () => {
+  test('autoPlaceBotCards places drafted cards into native layers', () => {
     const board = createPlayerBoard('p2', 'Bot', true)
-    board.drafted.push('controller-routing') // controller has 1
-    const options = [cardById('controller-middleware'), cardById('model-database'), cardById('view-web-view')]
-    const forecast = { threatTypesPresent: [] }
-
-    const pick = chooseBotDraftPick(createRng(1), options, board, forecast)
-
-    // controller already has a card; model and view are empty - should not pick controller-middleware
-    expect(pick).not.toEqual('controller-middleware')
-  })
-
-  test('balances toward the layer with fewest cards when all layers are represented', () => {
-    const board = createPlayerBoard('p2', 'Bot', true)
-    board.drafted.push('controller-routing', 'controller-middleware', 'model-database') // controller:2, model:1
-    const options = [cardById('controller-authorization'), cardById('model-caching'), cardById('view-web-view')]
-    const forecast = { threatTypesPresent: [] }
-
-    const pick = chooseBotDraftPick(createRng(1), options, board, forecast)
-
-    // view has 0 cards - most balancing choice
-    expect(pick).toEqual('view-web-view')
-  })
-
-  test('handles a null forecast (before round 1) without throwing', () => {
-    const board = createPlayerBoard('p2', 'Bot', true)
-    const options = [cardById('controller-routing'), cardById('model-database'), cardById('view-web-view')]
-    expect(() => chooseBotDraftPick(createRng(1), options, board, null)).not.toThrow()
-  })
-})
-
-describe('autoPlaceBotCards', () => {
-  test('places every drafted card into its own layer', () => {
-    const board = createPlayerBoard('p2', 'Bot', true)
-    board.drafted.push('controller-routing', 'model-database', 'view-web-view')
-
+    board.drafted = ['controller-routing', 'model-orm', 'view-cli-view']
     autoPlaceBotCards(board)
-
-    expect(board.layers.controller.map(s => s.cardId)).toContain('controller-routing')
-    expect(board.layers.model.map(s => s.cardId)).toContain('model-database')
-    expect(board.layers.view.map(s => s.cardId)).toContain('view-web-view')
-  })
-
-  test('does not double-place an already-placed card', () => {
-    const board = createPlayerBoard('p2', 'Bot', true)
-    board.drafted.push('controller-routing')
-    placeCard(board, 'controller-routing', 'controller')
-
-    autoPlaceBotCards(board)
-
-    expect(board.layers.controller).toHaveLength(1)
+    expect(board.layers.controller[0].cardId).toEqual('controller-routing')
+    expect(board.layers.model[0].cardId).toEqual('model-orm')
+    expect(board.layers.view[0].cardId).toEqual('view-cli-view')
+    expect(cardById(board.layers.view[0].cardId).layer).toEqual('view')
   })
 })
