@@ -39,44 +39,33 @@
 import { computeStops, computeHaltIndex } from '@/flow-mode/engine/pipelineStops'
 
 /**
- * Displays a request token's position in the MVC pipeline for a single
- * request, at whatever step the parent tells it to show (`stopIndex`). This
- * component is purely presentational and has no timers of its own - the
- * player advances the pipeline one stop at a time via a "Next Step" button
- * owned by `FlowModePage.vue`, so the pace of the animation is entirely
- * under the player's control rather than a fixed auto-play speed.
+ * Displays a use-case request token moving through the MVC pipeline:
+ * Request → Controller → Model → View → Response.
+ * Purely presentational — parent advances `stopIndex`.
  *
- * For a data request the full round trip is shown: Request -> Controller ->
- * Model -> Controller (return) -> View -> Response, making the second visit
- * to the Controller explicit. For a threat request a shorter Request ->
- * [target layer] -> Blocked/Penetrated sequence is shown.
- *
- * @vue-prop {Object} request - The request being displayed (data or threat).
- * @vue-prop {Object} result - Its resolution result (chain or threat resolution result).
- * @vue-prop {int} stopIndex - How many steps the player has advanced through
- * (shared across both players' pipelines); clamped locally to this request's
- * own halt point, since a request that fails early has nowhere further to go.
+ * @vue-prop {Object} useCase - The use case being simulated.
+ * @vue-prop {Object} result - Its resolution result.
+ * @vue-prop {int} stopIndex - How far the animation has advanced.
  */
 export default {
   name: 'RequestPipeline',
   props: {
-    request: { type: Object, required: true },
+    useCase: { type: Object, required: true },
     result: { type: Object, required: true },
     stopIndex: { type: Number, default: 0 }
   },
   computed: {
     stops () {
-      return computeStops(this.request, this.result)
+      return computeStops(this.useCase)
     },
     haltIndex () {
-      return computeHaltIndex(this.stops, this.request, this.result)
+      return computeHaltIndex(this.stops, this.useCase, this.result)
     },
-    /** The stop actually shown, capped at this pipeline's own halt point. */
     displayIndex () {
       return Math.min(this.stopIndex, this.haltIndex)
     },
     isFailureStop () {
-      return this.result.outcome === 'failed' || this.result.outcome === 'penetrated'
+      return this.result.outcome === 'failed'
     },
     explanationVisible () {
       return this.displayIndex >= this.haltIndex
@@ -100,13 +89,15 @@ export default {
 }
 
 .pipeline-stop {
-  padding: 0.6rem 1rem;
+  padding: 0.7rem 1.1rem;
   border: 1px solid #555;
   border-radius: 0.4rem;
   background: #2b2b2b;
   font-size: 0.95rem;
+  font-weight: 700;
   opacity: 0.4;
   transition: opacity 0.2s, border-color 0.2s;
+  min-width: 5.5rem;
 }
 
 .pipeline-stop.passed {
@@ -127,7 +118,7 @@ export default {
 }
 
 .pipeline-arrow {
-  padding: 0 0.3rem;
+  padding: 0 0.25rem;
   opacity: 0.3;
 }
 

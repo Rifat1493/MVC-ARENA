@@ -34,7 +34,7 @@
  * Final match result modal: who won (or a draw) and why.
  *
  * @vue-prop {Object} matchResult - `{ winnerId: (string|null), reason }`.
- * @vue-prop {Object[]} players - `[{ playerId, displayName }]`, used to show the winner's name.
+ * @vue-prop {Object[]} players - `[{ playerId, displayName }]`.
  * @vue-prop {bool} showing - True to display the modal.
  * @vue-event rematch - Emitted when the player wants to play again.
  * @vue-event exit - Emitted when the player wants to return to Home.
@@ -58,10 +58,9 @@ export default {
     },
     reasonText () {
       const reasons = {
-        score: 'Highest score.',
-        penetrations: 'Tied on score - won on fewer breaches.',
-        suddenDeath: 'Decided in sudden death.',
-        draw: 'Completely tied, even after sudden death.'
+        score: 'Most use cases fulfilled.',
+        requirements: 'Tied on fulfilled use cases — won on more required cards covered.',
+        draw: 'Completely tied on fulfilled use cases and requirements.'
       }
       return reasons[this.matchResult.reason] || ''
     }

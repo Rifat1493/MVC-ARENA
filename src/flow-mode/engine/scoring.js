@@ -1,114 +1,66 @@
 /**
- * Round and match scoring, plus match-winner and sudden-death decisions.
+ * Iteration and match scoring for use-case Flow Mode.
  *
  * @module flow-mode/engine/scoring
  */
 
-import { resolveDataRequest } from '@/flow-mode/engine/chainResolution'
-import { resolveThreatRequest } from '@/flow-mode/engine/threatResolution'
-
 /**
- * @typedef {Object} RoundScoreResult
- * @prop {int} served - Number of data requests served this round.
- * @prop {int} blocked - Number of threats blocked this round.
- * @prop {int} penetrated - Number of threats that penetrated this round.
- * @prop {int} roundScore - Total points earned this round (served + blocked).
+ * @typedef {Object} IterationScoreResult
+ * @prop {bool} fulfilled - Whether the use case was fully fulfilled.
+ * @prop {int} fulfilledRequirements - Required cards present.
+ * @prop {int} totalRequirements - Required cards for the use case.
+ * @prop {int} iterationScore - 1 if fulfilled, else 0.
  */
 
 /**
- * Tallies a player's results for a round into a score summary.
- * @param {PlayerBoard} board - The player's board (unused directly, kept for
- * API symmetry/future use, e.g. bonus scoring based on board state).
- * @param {Array} roundResults - The chain/threat resolution results for every
- * request the player faced this round.
- * @return {RoundScoreResult} The round's score summary.
+ * Tallies one iteration's resolution into a score summary.
+ * @param {Object} result - A {@link resolveUseCase} result.
+ * @return {IterationScoreResult} Score summary for the iteration.
  */
-function scoreRound (board, roundResults) {
-  let served = 0
-  let blocked = 0
-  let penetrated = 0
-
-  for (const result of roundResults) {
-    if (result.outcome === 'served') { served++ }
-    else if (result.outcome === 'blocked') { blocked++ }
-    else if (result.outcome === 'penetrated') { penetrated++ }
+function scoreIteration (result) {
+  const fulfilled = result.outcome === 'fulfilled'
+  return {
+    fulfilled,
+    fulfilledRequirements: result.fulfilledRequirements,
+    totalRequirements: result.totalRequirements,
+    iterationScore: fulfilled ? 1 : 0
   }
-
-  return { served, blocked, penetrated, roundScore: served + blocked }
 }
 
 /**
- * Rolls a round's score into a player's board: sets `board.roundScore`,
- * adds to `board.matchScore`, and adds any penetrations suffered to
- * `board.penetrations` (the tiebreaker count). Mutates the board.
+ * Rolls an iteration's score into a player's board. Mutates the board.
  * @param {PlayerBoard} board - The board to update.
- * @param {RoundScoreResult} roundScoreResult - The round's score summary.
+ * @param {IterationScoreResult} iterationScore - Score summary.
  */
-function applyRoundScoreToMatch (board, roundScoreResult) {
-  board.roundScore = roundScoreResult.roundScore
-  board.matchScore += roundScoreResult.roundScore
-  board.penetrations += roundScoreResult.penetrated
+function applyIterationScoreToMatch (board, iterationScore) {
+  board.roundScore = iterationScore.iterationScore
+  board.matchScore += iterationScore.iterationScore
+  board.requirementsFulfilled =
+    (board.requirementsFulfilled || 0) + iterationScore.fulfilledRequirements
 }
 
 /**
  * Determines the winner between two player boards.
  *
- * Highest `matchScore` wins. If tied, fewer `penetrations` wins. If still
- * tied, no winner is decided (caller should proceed to sudden death).
+ * Highest `matchScore` (fulfilled use cases) wins. If tied, higher
+ * `requirementsFulfilled` wins. If still tied, draw.
  *
- * @param {PlayerBoard} boardA - The first player's board.
- * @param {PlayerBoard} boardB - The second player's board.
- * @return {{winnerId: (string|null), reason: string}} The winner's playerId
- * (or null if still tied) and the reason: 'score' | 'penetrations' | 'tie'.
+ * @param {PlayerBoard} boardA - First player.
+ * @param {PlayerBoard} boardB - Second player.
+ * @return {{winnerId: (string|null), reason: string}} Winner and reason.
  */
 function determineMatchWinner (boardA, boardB) {
   if (boardA.matchScore !== boardB.matchScore) {
     const winner = boardA.matchScore > boardB.matchScore ? boardA : boardB
     return { winnerId: winner.playerId, reason: 'score' }
   }
-  if (boardA.penetrations !== boardB.penetrations) {
-    const winner = boardA.penetrations < boardB.penetrations ? boardA : boardB
-    return { winnerId: winner.playerId, reason: 'penetrations' }
+  const reqA = boardA.requirementsFulfilled || 0
+  const reqB = boardB.requirementsFulfilled || 0
+  if (reqA !== reqB) {
+    const winner = reqA > reqB ? boardA : boardB
+    return { winnerId: winner.playerId, reason: 'requirements' }
   }
-  return { winnerId: null, reason: 'tie' }
+  return { winnerId: null, reason: 'draw' }
 }
 
-/**
- * Resolves a single sudden-death request against both boards and decides if
- * it breaks the tie: it is decided only if exactly one player "succeeded"
- * (served the data request, or blocked the threat) and the other did not.
- * If both players have the same outcome, the tie is not broken.
- *
- * @param {PlayerBoard} boardA - The first player's board (read-only).
- * @param {PlayerBoard} boardB - The second player's board (read-only).
- * @param {Object} request - A single data or threat request.
- * @param {function(): number} rngA - Outcome rng for boardA (threat requests only).
- * @param {function(): number} rngB - Outcome rng for boardB (threat requests only).
- * @return {{resultA: Object, resultB: Object, decided: bool, winnerId: (string|undefined)}}
- */
-function resolveSuddenDeathRequest (boardA, boardB, request, rngA, rngB) {
-  const resolve = (board, rng) => {
-    return request.kind === 'data'
-      ? resolveDataRequest(board, request)
-      : resolveThreatRequest(board, request, rng)
-  }
-
-  const resultA = resolve(boardA, rngA)
-  const resultB = resolve(boardB, rngB)
-
-  const succeededA = resultA.outcome === 'served' || resultA.outcome === 'blocked'
-  const succeededB = resultB.outcome === 'served' || resultB.outcome === 'blocked'
-
-  if (succeededA === succeededB) {
-    return { resultA, resultB, decided: false }
-  }
-
-  return {
-    resultA,
-    resultB,
-    decided: true,
-    winnerId: succeededA ? boardA.playerId : boardB.playerId
-  }
-}
-
-export { scoreRound, applyRoundScoreToMatch, determineMatchWinner, resolveSuddenDeathRequest }
+export { scoreIteration, applyIterationScoreToMatch, determineMatchWinner }

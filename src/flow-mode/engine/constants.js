@@ -7,41 +7,45 @@
 /** The three MVC layers a card/column can belong to. */
 export const LAYERS = ['controller', 'model', 'view']
 
-/** The phases a FlowMatch moves through. */
+/**
+ * The phases a FlowMatch moves through.
+ *
+ * Match loop:
+ * useCase → select → build → simulate → iterationSummary
+ * (repeated ITERATIONS_PER_MATCH times) → matchEnd
+ */
 export const PHASES = {
   SETUP: 'setup',
-  FORECAST: 'forecast',
-  DRAFT: 'draft',
+  USE_CASE: 'useCase',
+  SELECT: 'select',
   BUILD: 'build',
-  SERVE: 'serve',
-  ROUND_SUMMARY: 'roundSummary',
+  SIMULATE: 'simulate',
+  ITERATION_SUMMARY: 'iterationSummary',
   MATCH_END: 'matchEnd'
 }
 
-/** The threat types a threat request can carry. */
-export const THREAT_TYPES = ['SQL_INJECTION', 'XSS', 'SESSION_FORGERY']
+/** Number of use-case iterations in a match. */
+export const ITERATIONS_PER_MATCH = 4
 
-/** Maps each threat type to the layer it targets. */
-export const THREAT_TARGET_LAYER = {
-  SQL_INJECTION: 'model',
-  XSS: 'view',
-  SESSION_FORGERY: 'controller'
+/** Initial selection quotas by layer. */
+export const INITIAL_CONTROLLER_CARDS = 2
+export const INITIAL_MODEL_CARDS = 2
+export const INITIAL_VIEW_CARDS = 1
+
+/** Total cards required in the initial selection (2+2+1). */
+export const INITIAL_CARD_TOTAL =
+  INITIAL_CONTROLLER_CARDS + INITIAL_MODEL_CARDS + INITIAL_VIEW_CARDS
+
+/** Cards each player may add before iterations 2–4. */
+export const UPGRADE_CARDS_PER_TURN = 2
+
+/** Difficulty tiers used when scheduling progressive use cases. */
+export const DIFFICULTY = {
+  EASY: 1,
+  MEDIUM: 2,
+  HARD: 3
 }
 
-/** Number of cards drafted per player per match. */
-export const DRAFT_PICKS = 5
+/** Total wall-clock time for the automatic pipeline animation (ms). */
+export const SIMULATION_DURATION_MS = 30000
 
-/** Number of requests served per round. */
-export const REQUESTS_PER_ROUND = 5
-
-/** Number of data requests (of the 5) in a round's queue. */
-export const DATA_REQUESTS_PER_ROUND = 3
-
-/** Number of threat requests (of the 5) in a round's queue. */
-export const THREAT_REQUESTS_PER_ROUND = 2
-
-/** Number of rounds in a match. */
-export const ROUNDS_PER_MATCH = 1
-
-/** Maximum extra requests to play in sudden death before declaring a draw. */
-export const MAX_SUDDEN_DEATH_REQUESTS = 3
