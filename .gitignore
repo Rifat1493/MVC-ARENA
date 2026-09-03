@@ -18,6 +18,7 @@ notes.txt
 *.orig
 notes.txt
 
-# Local playtest analysis (notebooks, secrets, exports)
-analytics/
+# Local playtest analysis (notebooks, secrets, exports).
+# Root folder only — must NOT match the in-app src/analytics/ telemetry code.
+/analytics/
 
