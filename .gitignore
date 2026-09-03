@@ -20,5 +20,5 @@ notes.txt
 
 # Local playtest analysis (notebooks, secrets, exports).
 # Root folder only — must NOT match the in-app src/analytics/ telemetry code.
-/analytics/
+/analysis/
 
