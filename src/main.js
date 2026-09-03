@@ -3,6 +3,18 @@ import App from './App.vue'
 import router from './router'
 import { store } from './store/store'
 import { loadDistribution } from '@/classes/deck/distributionConfig'
+import { initAnalytics } from '@/analytics'
+import { endBaseSession } from '@/analytics/gameAnalytics'
+import { bus } from '@/components/shared/Bus'
+
+initAnalytics()
+
+bus.on('game-over', () => {
+  const game = store.state.game
+  if (game) {
+    endBaseSession(game)
+  }
+})
 
 const app = createApp(App)
 app.use(router)

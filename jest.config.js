@@ -10,6 +10,11 @@ module.exports = {
     '^.+\\.[jt]sx?$': ['babel-jest', { configFile: './babel.config.js' }],
   },
   moduleNameMapper: {
+    '^@/analytics/supabaseLogger$': '<rootDir>/tests/mocks/analytics.js',
+    '^@/analytics/capture$': '<rootDir>/tests/mocks/analytics.js',
+    '^@/analytics/gameAnalytics$': '<rootDir>/tests/mocks/analytics.js',
+    '^@/analytics/playtest$': '<rootDir>/tests/mocks/analytics.js',
+    '^@/analytics$': '<rootDir>/tests/mocks/analytics.js',
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   // Include 'vue' so extensionless imports of .vue single-file components resolve.

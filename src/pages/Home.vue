@@ -13,6 +13,26 @@
       <add-players />
 
       <div
+        id="playtest-code"
+        class="centered"
+      >
+        <label for="playtest-code-input">Playtest code (optional)</label>
+        <input
+          id="playtest-code-input"
+          v-model="playtestCode"
+          type="text"
+          maxlength="16"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="Enter code if recruited"
+        >
+        <span
+          v-if="playtestArmed"
+          id="playtest-armed"
+        >Playtest mode on</span>
+      </div>
+
+      <div
         id="message"
         class="centered"
       >
@@ -31,15 +51,6 @@
         >
           Play Base
         </button>
-
-        <button
-          id="go-flow"
-          class="btn btn-info"
-          :disabled="!home.canStart()"
-          @click="playFlow()"
-        >
-          Play Flow
-        </button>
       </div>
     </div>
   </div>
@@ -48,8 +59,8 @@
 <script>
 import PageHeader from '@/components/shared/PageHeader'
 import AddPlayers from '@/components/setup/AddPlayers'
+import { setPlaytestCode, PLAYTEST_CODE } from '@/analytics/playtest'
 import { mapActions, mapGetters } from 'vuex'
-import { setPendingSetup } from '@/flow-mode/pendingSetup'
 
 /**
  * The main landing page component for Program Wars where players set up and start games.
@@ -60,8 +71,16 @@ export default {
     'page-header': PageHeader,
     'add-players': AddPlayers
   },
+  data () {
+    return {
+      playtestCode: ''
+    }
+  },
   computed: {
-    ...mapGetters(['home'])
+    ...mapGetters(['home']),
+    playtestArmed () {
+      return String(this.playtestCode || '').trim().toUpperCase() === PLAYTEST_CODE
+    }
   },
   methods: {
     ...mapActions([
@@ -71,28 +90,11 @@ export default {
      * Starts a Base Mode game using the players set up on this page.
      */
     playBase () {
+      setPlaytestCode(this.playtestCode)
       if (this.home.canStart()) {
         this.startBeginnerGame({
           players: this.home.createPlayers(), level: this.home.level })
       }
-    },
-    /**
-     * Starts Flow Mode using the same players set up on this page (via
-     * AddPlayers), rather than asking again. Flow Mode is a fully separate
-     * game mode (see src/flow-mode/) that keeps its own local match state
-     * instead of using Vuex, so the chosen names/bot flag are handed off via
-     * {@link setPendingSetup} instead of the route (keeping the URL a plain
-     * `/flow`) for `FlowModePage` to pick up in its `created()` hook.
-     * `home.players` is already sorted human-first (see Home.js#sortPlayers),
-     * and canStart() guarantees player 1 is human.
-     */
-    playFlow () {
-      if (!this.home.canStart()) { return }
-      const [player1, player2] = this.home.players
-      setPendingSetup({
-        player1Name: player1.name, player2IsBot: player2.isAI, player2Name: player2.name
-      })
-      this.$router.push('/flow')
     }
   }
 }
@@ -117,6 +119,34 @@ export default {
   border-radius: 2rem;
 }
 
+#playtest-code {
+  position: absolute;
+  bottom: 18%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+#playtest-code label {
+  margin: 0;
+  color: #333;
+}
+
+#playtest-code-input {
+  width: 11rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #888;
+  border-radius: 0.25rem;
+}
+
+#playtest-armed {
+  color: #0a7a2f;
+  font-weight: 600;
+}
+
 #message {
   position: absolute;
   bottom: 13%;
@@ -127,9 +157,6 @@ export default {
   position: absolute;
   bottom: 2%;
   width: 100%;
-  display: flex;
-  justify-content: center;
-  gap: 1.5rem;
 }
 
 .centered {

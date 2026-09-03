@@ -1,6 +1,8 @@
 .DS_Store
 node_modules/
 dist/
+.env
+.env.local
 .firebase
 npm-debug.log
 test/unit/coverage
@@ -15,4 +17,8 @@ notes.txt
 *.swp
 *.orig
 notes.txt
+
+# Local playtest analysis (notebooks, secrets, exports).
+# Root folder only — must NOT match the in-app src/analytics/ telemetry code.
+/analysis/
 

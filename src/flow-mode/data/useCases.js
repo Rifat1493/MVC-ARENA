@@ -24,12 +24,12 @@ const USE_CASES = [
   {
     id: 'mobile-login',
     title: 'Login from Mobile App',
-    description: 'A user signs in from a phone. The system must verify identity, run request middleware, look up the account, and render the mobile login UI.',
-    securityRisk: 'Session Theft / Session Forgery',
-    consequence: 'Without Authentication and a safe mobile path, attackers forge sessions and steal accounts.',
+    description: 'Imagine a customer opens the app on a phone and tries to sign in. Can the system recognize the right person, find the account, and return a screen suited to that device?',
+    securityRisk: 'Account Takeover / Session Abuse',
+    consequence: 'Weak identity checks can let an attacker impersonate a customer and take over the account.',
     requiredCardIds: [
+      'controller-routing',
       'controller-authentication',
-      'controller-middleware',
       'model-database',
       'view-mobile-view'
     ],
@@ -38,7 +38,7 @@ const USE_CASES = [
   {
     id: 'account-registration',
     title: 'Create New Account',
-    description: 'A visitor registers with a web form. Input must be validated and stored safely with parameterized queries.',
+    description: 'Imagine a new visitor submits personal details to create an account. Can the system reject unsafe values, save a valid account, and confirm the result in the browser?',
     securityRisk: 'SQL Injection',
     consequence: 'Without ORM and Data Validation, registration forms become an SQL injection entry point.',
     requiredCardIds: [
@@ -53,7 +53,7 @@ const USE_CASES = [
   {
     id: 'product-search',
     title: 'Search Product Catalog',
-    description: 'Users search products. Queries must hit the database safely and return results in the web UI.',
+    description: 'Imagine a shopper searches the catalog with a keyword. Can the request reach the right logic, retrieve matching records safely, and present useful results?',
     securityRisk: 'SQL Injection',
     consequence: 'Raw search queries without an ORM let attackers inject SQL and steal or corrupt catalog data.',
     requiredCardIds: [
@@ -67,7 +67,7 @@ const USE_CASES = [
   {
     id: 'profile-update',
     title: 'Update User Profile',
-    description: 'An authenticated user changes profile details. The write must be authorized and protected from forged requests.',
+    description: 'Imagine a signed-in customer changes an address or display name. Can the system confirm the request is genuine, check the new details, save them, and show the update?',
     securityRisk: 'CSRF / Data Tampering',
     consequence: 'Without CSRF Protection and Authorization, attackers trick users into changing their own profile data.',
     requiredCardIds: [
@@ -83,7 +83,7 @@ const USE_CASES = [
   {
     id: 'post-comments',
     title: 'Post a Comment',
-    description: 'Users publish comments that are stored and later displayed. Output must be escaped before rendering.',
+    description: 'Imagine a community member publishes a comment that other visitors will read later. Can the system accept, save, and display it without allowing hidden code to run?',
     securityRisk: 'XSS / Cross-Site Scripting',
     consequence: 'Without Output Validation, stored comment scripts execute in other users\' browsers.',
     requiredCardIds: [
@@ -98,7 +98,7 @@ const USE_CASES = [
   {
     id: 'file-upload',
     title: 'Upload a User File',
-    description: 'A user uploads a document. The app must store files through a controlled adapter after validating input.',
+    description: 'Imagine a customer uploads a document and expects to see a confirmation. Can the system inspect the submission, store it safely, and complete the request?',
     securityRisk: 'Malware Upload',
     consequence: 'Without a File Storage Adapter and validation, malware can be uploaded and executed on the server.',
     requiredCardIds: [
@@ -112,7 +112,7 @@ const USE_CASES = [
   {
     id: 'admin-dashboard',
     title: 'Open Admin Dashboard',
-    description: 'An administrator opens a privileged dashboard. Identity and permissions must both be enforced.',
+    description: 'Imagine a staff member opens a privileged dashboard. Can the system confirm who they are, check what they may access, retrieve the information, and display it?',
     securityRisk: 'Unauthorized Access',
     consequence: 'Without Authentication and Authorization, anyone can reach admin tools and steal privileged data.',
     requiredCardIds: [
@@ -127,12 +127,12 @@ const USE_CASES = [
   {
     id: 'password-reset',
     title: 'Reset Forgotten Password',
-    description: 'A user resets a password via email token. Secrets and identity checks must protect the reset flow.',
-    securityRisk: 'Credential / Data Theft',
-    consequence: 'Without Secrets Manager and Authentication, reset tokens leak and attackers take over accounts.',
+    description: 'Imagine a customer who cannot sign in follows a one-time recovery link. Can the system control repeated attempts, protect the recovery value, update the account, and return confirmation?',
+    securityRisk: 'Reset-Token Abuse / Account Takeover',
+    consequence: 'Exposed recovery values or unlimited reset attempts can let an attacker take over an account.',
     requiredCardIds: [
-      'controller-authentication',
       'controller-routing',
+      'controller-rate-limiting',
       'model-secrets-manager',
       'model-database',
       'view-web-view'
@@ -141,10 +141,10 @@ const USE_CASES = [
   },
   {
     id: 'api-rate-abuse',
-    title: 'Public API Endpoint',
-    description: 'Clients call a public API. Rate limiting and middleware must keep abusive traffic from overwhelming the service.',
+    title: 'Open Public Data Dashboard',
+    description: 'Imagine many visitors open a public status dashboard at once. Can the system manage the surge, direct each request, retrieve current information, and keep the page available?',
     securityRisk: 'Denial of Service (DoS)',
-    consequence: 'Without Rate Limiting, attackers flood the API and deny service to legitimate users.',
+    consequence: 'Uncontrolled request volume can overwhelm the service and prevent legitimate visitors from receiving a response.',
     requiredCardIds: [
       'controller-rate-limiting',
       'controller-middleware',
@@ -157,7 +157,7 @@ const USE_CASES = [
   {
     id: 'cached-catalog',
     title: 'Browse Cached Catalog',
-    description: 'Shoppers browse a frequently viewed catalog. Caching reduces database load while routing serves the page.',
+    description: 'Imagine many shoppers repeatedly open the same popular catalog pages. Can the system return them quickly without performing the same slow work for every visitor?',
     securityRisk: 'Performance Abuse / Overload',
     consequence: 'Without Caching, repeated catalog hits overload the database and degrade availability.',
     requiredCardIds: [
@@ -171,7 +171,7 @@ const USE_CASES = [
   {
     id: 'private-file-download',
     title: 'Download Private File',
-    description: 'An authenticated user downloads a private file. Access control and the storage adapter must both be present.',
+    description: 'Imagine a customer requests a private document. Can the system confirm the person is allowed to receive it, retrieve the correct file, and deliver it without exposing anyone else’s data?',
     securityRisk: 'Unauthorized Data Theft',
     consequence: 'Without Authorization and File Storage Adapter, private files can be stolen by anyone who guesses a URL.',
     requiredCardIds: [
@@ -184,15 +184,15 @@ const USE_CASES = [
   },
   {
     id: 'secrets-integration',
-    title: 'Call External Payment API',
-    description: 'The app calls a third-party API using stored credentials. Secrets must never be hard-coded.',
-    securityRisk: 'Secrets / Credential Leakage',
-    consequence: 'Without Secrets Manager, API keys leak and attackers abuse external integrations.',
+    title: 'Show Live Delivery Quote',
+    description: 'Imagine a checkout page requests a live delivery quote from an outside provider. Can the system contact that service without exposing private credentials and present the quote to the shopper?',
+    securityRisk: 'Credential Leakage / Third-Party Abuse',
+    consequence: 'Exposed service credentials can let attackers impersonate the application and abuse the outside provider.',
     requiredCardIds: [
+      'controller-routing',
       'controller-middleware',
-      'controller-authentication',
       'model-secrets-manager',
-      'model-database',
+      'model-caching',
       'view-web-view'
     ],
     difficulty: 2
@@ -200,7 +200,7 @@ const USE_CASES = [
   {
     id: 'cli-maintenance',
     title: 'Run CLI Maintenance Job',
-    description: 'Operators run a command-line maintenance job that reads and updates stored data.',
+    description: 'Imagine an operator starts a powerful maintenance task from a terminal. Can the system allow only approved staff, update the correct records, and return a clear result?',
     securityRisk: 'Unauthorized Maintenance Access',
     consequence: 'Without Authentication and a CLI View, untrusted operators can run destructive maintenance commands.',
     requiredCardIds: [
@@ -214,13 +214,13 @@ const USE_CASES = [
   {
     id: 'checkout-payment',
     title: 'Checkout and Pay',
-    description: 'A shopper completes checkout. The flow needs auth, CSRF protection, secrets for payment, and a safe web UI.',
-    securityRisk: 'Payment Fraud / CSRF / Data Theft',
-    consequence: 'Missing checkout defenses let attackers forge payments or steal payment credentials.',
+    description: 'Imagine a signed-in shopper submits an order and payment. Can the system reject forged or malformed requests, handle sensitive values safely, record the purchase, and show confirmation?',
+    securityRisk: 'Payment Fraud / Forged Requests / Injection',
+    consequence: 'Weak checkout controls can allow forged orders, unsafe input, credential exposure, or tampering with purchase records.',
     requiredCardIds: [
       'controller-authentication',
       'controller-csrf-protection',
-      'controller-rate-limiting',
+      'model-data-validation',
       'model-secrets-manager',
       'model-orm',
       'model-database',
@@ -231,7 +231,7 @@ const USE_CASES = [
   {
     id: 'secure-report-export',
     title: 'Export Secure Report',
-    description: 'An authorized user exports a sensitive report. Data must be queried safely and escaped in the output.',
+    description: 'Imagine a staff member requests an export containing sensitive records. Can the system verify access, retrieve the right information safely, and produce an output that cannot execute hidden content?',
     securityRisk: 'Data Theft / XSS in Exports',
     consequence: 'Without Authorization, ORM, and Output Validation, reports leak or carry injected scripts.',
     requiredCardIds: [

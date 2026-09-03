@@ -124,10 +124,10 @@ CSRF, unauthorized access, and more).
    - Iterations 2–4: read the **new use case first**, then add exactly **2 new cards**.
 3. **Review** — Selected cards are placed automatically into their Controller /
    Model / View layers.
-4. **Simulate** — Watch an automatic ~30 second request/response animation. The use
-   case is **fulfilled** only if every required card is installed; otherwise the
-   flow stops at the first missing card. Afterward, the security risk and required
-   cards are revealed.
+4. **Simulate** — Watch an automatic ~15 second request/response animation. The use
+   case is **fulfilled** only if every **required card** is present in your system;
+   otherwise it stops at the first missing card. Afterward you see the required-card
+   match result, plus a short security lesson about why those cards matter.
 5. Repeat for four different use cases, then compare scores.
 
 ## Scoring

@@ -13,6 +13,11 @@
  */
 
 import BeginnerGame from '@/pages/pageStates/BeginnerGame'
+import {
+  startBaseSession,
+  markBaseTurnStart,
+  abandonBaseSession
+} from '@/analytics/gameAnalytics'
 // import StandardGame from '@/pages/pageStates/StandardGame' // DEVELOPMENT: Removed
 
 /**
@@ -25,8 +30,11 @@ import BeginnerGame from '@/pages/pageStates/BeginnerGame'
  * {@link deckData} for more information on what this object looks like.
  */
 function startBeginnerGame ({ commit }, { players, level }) {
-  commit('pushGameState', { gameState: new BeginnerGame(players, level) })
+  const gameState = new BeginnerGame(players, level)
+  commit('pushGameState', { gameState: gameState })
   commit('changePage', { page: 'beginner' })
+  startBaseSession(gameState, level, players)
+  markBaseTurnStart()
 }
 
 /**
@@ -34,7 +42,10 @@ function startBeginnerGame ({ commit }, { players, level }) {
  *
  * @param {function} commit - A vuex function that allows commiting mutations.
  */
-function leaveGame ({ commit }) {
+function leaveGame ({ commit, state }) {
+  if (state.game) {
+    abandonBaseSession(state.game)
+  }
   commit('seenBackstory')
   commit('changePage', { page: 'home' })
 }

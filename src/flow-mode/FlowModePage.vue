@@ -192,6 +192,7 @@
 
 <script>
 import FlowMatch from '@/flow-mode/engine/matchManager'
+import { startFlowSession, abandonFlowSession } from '@/analytics/gameAnalytics'
 import { ITERATIONS_PER_MATCH, SIMULATION_DURATION_MS } from '@/flow-mode/engine/constants'
 import { computeStops, computeHaltIndex } from '@/flow-mode/engine/pipelineStops'
 import { cardById } from '@/flow-mode/data/cards'
@@ -367,6 +368,7 @@ export default {
     },
     onStart (setup) {
       const match = new FlowMatch(setup)
+      startFlowSession(match)
       match.startUseCasePhase()
       this.match = match
       this.bumpMatch()
@@ -425,6 +427,9 @@ export default {
       this.bumpMatch()
     },
     onRematch () {
+      if (this.match) {
+        abandonFlowSession(this.match)
+      }
       this.clearPipelineTimer()
       this.match = null
       this.currentSimulation = null
@@ -433,6 +438,9 @@ export default {
       this.matchRev = 0
     },
     exitToHome () {
+      if (this.match) {
+        abandonFlowSession(this.match)
+      }
       this.clearPipelineTimer()
       this.$router.push('/')
     }

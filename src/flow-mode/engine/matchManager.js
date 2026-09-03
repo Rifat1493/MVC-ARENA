@@ -30,6 +30,12 @@ import {
   validateInitialSelection,
   validateUpgradeSelection
 } from '@/flow-mode/engine/selection'
+import {
+  trackFlowPhase,
+  trackFlowSelectionConfirmed,
+  trackFlowSimulationCompleted,
+  endFlowSession
+} from '@/analytics/gameAnalytics'
 
 /**
  * Orchestrates a Flow Mode match between two players (`p1`, optionally
@@ -70,6 +76,7 @@ class FlowMatch {
   startUseCasePhase () {
     this.currentUseCase = this.useCaseSchedule[this.iterationNumber - 1]
     this.phase = PHASES.USE_CASE
+    trackFlowPhase(this, PHASES.USE_CASE)
   }
 
   /**
@@ -86,6 +93,8 @@ class FlowMatch {
       p1: { selected: [], confirmed: false },
       p2: { selected: [], confirmed: false }
     }
+
+    trackFlowPhase(this, PHASES.SELECT)
 
     if (this.players.p1.isBot) { this._runBotSelect('p1') }
     if (this.players.p2.isBot) { this._runBotSelect('p2') }
@@ -158,6 +167,7 @@ class FlowMatch {
       board.drafted.push(cardId)
     }
     state.confirmed = true
+    trackFlowSelectionConfirmed(this, playerId)
     this._maybeAdvancePastSelect()
     return { ok: true }
   }
@@ -168,6 +178,7 @@ class FlowMatch {
    */
   startBuild () {
     this.phase = PHASES.BUILD
+    trackFlowPhase(this, PHASES.BUILD)
     for (const playerId of ['p1', 'p2']) {
       autoPlaceBotCards(this.players[playerId])
     }
@@ -218,6 +229,7 @@ class FlowMatch {
    */
   runSimulation () {
     this.phase = PHASES.SIMULATE
+    trackFlowPhase(this, PHASES.SIMULATE)
     const resultP1 = resolveUseCase(this.players.p1, this.currentUseCase)
     const resultP2 = resolveUseCase(this.players.p2, this.currentUseCase)
 
@@ -248,6 +260,11 @@ class FlowMatch {
 
     this.simulateState.scored = true
     this.phase = PHASES.ITERATION_SUMMARY
+    trackFlowSimulationCompleted(this, {
+      resultP1: this.simulateState.resultP1,
+      resultP2: this.simulateState.resultP2
+    })
+    trackFlowPhase(this, PHASES.ITERATION_SUMMARY)
   }
 
   /**
@@ -283,6 +300,8 @@ class FlowMatch {
     if (this.matchResult) { return this.matchResult }
     this.matchResult = determineMatchWinner(this.players.p1, this.players.p2)
     this.phase = PHASES.MATCH_END
+    trackFlowPhase(this, PHASES.MATCH_END)
+    endFlowSession(this)
     return this.matchResult
   }
 

@@ -9,7 +9,7 @@ const fulfilled = {
   totalRequirements: 4,
   missingCardId: null,
   failedAtLayer: null,
-  explanation: 'Fulfilled: Login from Mobile App.'
+  explanation: 'Fulfilled: all 4 required cards are in your system.'
 }
 const failed = {
   outcome: 'failed',
@@ -17,7 +17,7 @@ const failed = {
   totalRequirements: 4,
   missingCardId: 'model-database',
   failedAtLayer: 'model',
-  explanation: 'Missing Database. Attackers forge sessions.'
+  explanation: 'Not fulfilled: required card "Database" (Model) is missing from your system.'
 }
 
 describe('RequestPipeline', () => {
@@ -36,7 +36,7 @@ describe('RequestPipeline', () => {
     })
     expect(wrapper.find('.pipeline-explanation').exists()).toBe(false)
     await wrapper.setProps({ stopIndex: wrapper.vm.haltIndex })
-    expect(wrapper.find('.pipeline-explanation').text()).toMatch(/Fulfilled/)
+    expect(wrapper.find('.pipeline-explanation').text()).toMatch(/all 4 required cards/)
   })
 
   test('failed request halts at the failed MVC layer and marks failure', () => {
@@ -45,6 +45,6 @@ describe('RequestPipeline', () => {
     })
     expect(wrapper.vm.stops[wrapper.vm.haltIndex].label).toEqual('Model')
     expect(wrapper.find('.pipeline-stop.failed').exists()).toBe(true)
-    expect(wrapper.find('.pipeline-explanation').text()).toMatch(/Missing Database/)
+    expect(wrapper.find('.pipeline-explanation').text()).toMatch(/required card "Database"/)
   })
 })
