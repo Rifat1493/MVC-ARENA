@@ -1,45 +1,44 @@
 import { mount } from '@vue/test-utils'
-import { createStore } from 'vuex'
-import { nextTick } from 'vue'
-import EffectNotifications from '@/components/shared/EffectNotifications'
 import { bus } from '@/components/shared/Bus'
+import EffectNotifications from '@/components/shared/EffectNotifications'
+
+jest.mock('vuex', () => ({
+  mapGetters: () => ({ game: () => null })
+}))
 
 describe('EffectNotifications', () => {
-  beforeEach(() => {
-    jest.useFakeTimers()
-  })
-
-  afterEach(() => {
-    jest.runOnlyPendingTimers()
-    jest.useRealTimers()
-  })
-
-  test('shows and hides collision animation for blocked attacks', async () => {
-    const store = createStore({
-      state: {},
-      getters: {
-        game: () => ({})
-      }
-    })
-
-    const wrapper = mount(EffectNotifications, {
-      global: { plugins: [store] }
-    })
+  test('attackBlocked places cards on each player side (defender left, attacker right)', () => {
+    const wrapper = mount(EffectNotifications)
 
     bus.emit('attack-blocked', {
-      defenseImage: 'static/cardImages/model/orm.png',
-      attackImage: 'static/cardImages/attack/sql_injection.png',
-      message: 'ORM vs SQL Injection'
+      attackImage: 'attack.png',
+      defenseImage: 'defense.png',
+      message: 'Orm encountered SQL Injection',
+      attackerPlayerId: 1,
+      defenderPlayerId: 0
     })
 
-    await nextTick()
+    expect(wrapper.vm.collisionLeft).toBe('defense.png')
+    expect(wrapper.vm.collisionRight).toBe('attack.png')
+    expect(wrapper.vm.showingCollision).toBe(true)
 
-    expect(wrapper.find('#collision-notification').exists()).toBe(true)
-    expect(wrapper.text()).toContain('ORM vs SQL Injection')
+    wrapper.unmount()
+  })
 
-    jest.advanceTimersByTime(7500)
-    await nextTick()
+  test('attackBlocked swaps sides when defender is on the right', () => {
+    const wrapper = mount(EffectNotifications)
 
-    expect(wrapper.find('#collision-notification').exists()).toBe(false)
+    bus.emit('attack-blocked', {
+      attackImage: 'attack.png',
+      defenseImage: 'defense.png',
+      message: 'Orm encountered SQL Injection',
+      attackerPlayerId: 0,
+      defenderPlayerId: 1
+    })
+
+    expect(wrapper.vm.collisionLeft).toBe('attack.png')
+    expect(wrapper.vm.collisionRight).toBe('defense.png')
+
+    wrapper.unmount()
   })
 })

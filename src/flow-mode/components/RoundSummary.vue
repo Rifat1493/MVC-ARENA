@@ -12,16 +12,12 @@
 
     <div
       v-if="useCase"
-      class="round-summary-reveal"
+      class="round-summary-requirements-block"
     >
-      <div class="round-summary-security">
-        <strong>Security risk:</strong> {{ useCase.securityRisk }}
-      </div>
-      <p class="round-summary-consequence">
-        {{ useCase.consequence }}
+      <p class="round-summary-requirements-label">
+        Required cards for this use case (must match what you played):
       </p>
       <div class="round-summary-requirements">
-        <span class="round-summary-requirements-label">Required cards:</span>
         <span
           v-for="card in requiredCards"
           :key="card.id"
@@ -41,9 +37,9 @@
       >
         <span class="round-summary-name">{{ entry.displayName }}</span>
         <span :class="entry.fulfilled ? 'round-summary-pass' : 'round-summary-fail'">
-          {{ entry.fulfilled ? 'Fulfilled' : 'Failed' }}
+          {{ entry.fulfilled ? 'Fulfilled' : 'Not fulfilled' }}
         </span>
-        <span>Reqs: {{ entry.fulfilledRequirements }}/{{ entry.totalRequirements }}</span>
+        <span>Matched: {{ entry.fulfilledRequirements }}/{{ entry.totalRequirements }}</span>
         <span class="round-summary-score">+{{ entry.iterationScore }} pts</span>
       </div>
     </div>
@@ -58,6 +54,21 @@
         class="round-summary-explanation"
       >
         {{ text }}
+      </p>
+    </div>
+
+    <div
+      v-if="useCase"
+      class="round-summary-lesson"
+    >
+      <p class="round-summary-lesson-label">
+        Security lesson (why these cards matter):
+      </p>
+      <div class="round-summary-security">
+        <strong>{{ useCase.securityRisk }}</strong>
+      </div>
+      <p class="round-summary-consequence">
+        {{ useCase.consequence }}
       </p>
     </div>
 
@@ -83,16 +94,8 @@
 import { cardById } from '@/flow-mode/data/cards'
 
 /**
- * End-of-iteration recap: reveals security risk and required cards, plus
- * whether each player fulfilled the use case.
- *
- * @vue-prop {int} iterationNumber - The iteration that just finished.
- * @vue-prop {string} useCaseTitle - Title of the use case just simulated.
- * @vue-prop {Object|null} useCase - Full use case (for post-sim reveal).
- * @vue-prop {Object} iterationResult - `{ p1: score+result, p2: score+result }`.
- * @vue-prop {Object[]} cumulativeScores - `[{ playerId, displayName, matchScore }]`.
- * @vue-prop {string} nextLabel - Label for the continue button.
- * @vue-event continue - Emitted when the player is ready to proceed.
+ * End-of-iteration recap: required-vs-played card match first, then an
+ * optional security lesson about why those cards matter.
  */
 export default {
   name: 'RoundSummary',
@@ -153,24 +156,14 @@ export default {
   font-weight: 700;
 }
 
-.round-summary-reveal {
+.round-summary-requirements-block {
   margin: 1rem 0;
-  text-align: center;
 }
 
-.round-summary-security {
-  background: #4a1414;
-  border: 1px solid #ff2d2d;
-  border-radius: 0.4rem;
-  padding: 0.5rem 0.8rem;
-  color: #ffb3b3;
+.round-summary-requirements-label {
+  font-size: 0.85rem;
+  color: #bbb;
   margin-bottom: 0.5rem;
-}
-
-.round-summary-consequence {
-  font-size: 0.9rem;
-  color: #ff8b8b;
-  margin-bottom: 0.8rem;
 }
 
 .round-summary-requirements {
@@ -179,13 +172,6 @@ export default {
   gap: 0.4rem;
   justify-content: center;
   align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.round-summary-requirements-label {
-  font-size: 0.85rem;
-  color: #bbb;
-  margin-right: 0.3rem;
 }
 
 .round-summary-requirement-chip {
@@ -253,6 +239,34 @@ export default {
   font-size: 0.8rem;
   color: #ddd;
   margin: 0.3rem 0;
+}
+
+.round-summary-lesson {
+  margin: 1rem 0;
+  padding-top: 0.8rem;
+  border-top: 1px solid #555;
+  text-align: center;
+}
+
+.round-summary-lesson-label {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin-bottom: 0.5rem;
+}
+
+.round-summary-security {
+  background: #4a1414;
+  border: 1px solid #ff2d2d;
+  border-radius: 0.4rem;
+  padding: 0.5rem 0.8rem;
+  color: #ffb3b3;
+  margin-bottom: 0.5rem;
+}
+
+.round-summary-consequence {
+  font-size: 0.85rem;
+  color: #ff8b8b;
+  margin-bottom: 0;
 }
 
 .round-summary-cumulative {

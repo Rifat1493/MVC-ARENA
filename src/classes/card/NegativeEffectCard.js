@@ -40,7 +40,9 @@ class NegativeEffectCard extends Card {
       playInfo.blockedBy = {
         attackImage: this.image,
         defenseImage: defenseCard.image,
-        message: `${this._displayName(defenseCard)} encountered ${this._displayName(this)}`
+        message: `${this._displayName(defenseCard)} encountered ${this._displayName(this)}`,
+        attackerPlayerId: playInfo.player.id,
+        defenderPlayerId: playInfo.target.id
       }
       if (defenseStack) {
         defenseStack.cards = defenseStack.cards.filter(c => c !== defenseCard)

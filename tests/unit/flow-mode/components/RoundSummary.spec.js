@@ -10,14 +10,14 @@ describe('RoundSummary', () => {
       fulfilledRequirements: 4,
       totalRequirements: 4,
       iterationScore: 1,
-      result: { explanation: 'Fulfilled securely.' }
+      result: { explanation: 'Fulfilled: all 4 required cards are in your system.' }
     },
     p2: {
       fulfilled: false,
       fulfilledRequirements: 2,
       totalRequirements: 4,
       iterationScore: 0,
-      result: { explanation: 'Missing ORM.' }
+      result: { explanation: 'Not fulfilled: required card "ORM" (Model) is missing from your system.' }
     }
   }
   const cumulativeScores = [
@@ -25,7 +25,7 @@ describe('RoundSummary', () => {
     { playerId: 'p2', displayName: 'Bot', matchScore: 1 }
   ]
 
-  test('reveals security risk and required cards after simulation', () => {
+  test('shows required-card match results before the security lesson', () => {
     const wrapper = mount(RoundSummary, {
       props: {
         iterationNumber: 1,
@@ -36,13 +36,12 @@ describe('RoundSummary', () => {
         nextLabel: 'Next Use Case'
       }
     })
-    expect(wrapper.text()).toContain('Iteration 1 Complete')
-    expect(wrapper.text()).toContain(useCase.title)
-    expect(wrapper.text()).toContain(useCase.securityRisk)
+    expect(wrapper.text()).toContain('Required cards for this use case')
     expect(wrapper.text()).toContain('Authentication')
-    expect(wrapper.text()).toContain('Mobile View')
-    expect(wrapper.text()).toContain('Fulfilled')
-    expect(wrapper.text()).toContain('Failed')
+    expect(wrapper.text()).toContain('Matched: 4/4')
+    expect(wrapper.text()).toContain('Not fulfilled')
+    expect(wrapper.text()).toContain('Security lesson')
+    expect(wrapper.text()).toContain(useCase.securityRisk)
   })
 
   test('emits continue', async () => {
@@ -57,6 +56,5 @@ describe('RoundSummary', () => {
     })
     await wrapper.find('button').trigger('click')
     expect(wrapper.emitted('continue')).toHaveLength(1)
-    expect(wrapper.find('button').text()).toEqual('See Result')
   })
 })

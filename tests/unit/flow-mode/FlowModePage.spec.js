@@ -90,7 +90,7 @@ describe('FlowModePage', () => {
     await nextTick()
     expect(wrapper.vm.match.phase).toEqual('iterationSummary')
     expect(wrapper.vm.currentSimulation).toBeNull()
-    expect(wrapper.findComponent({ name: 'RoundSummary' }).text()).toContain('Security risk')
+    expect(wrapper.findComponent({ name: 'RoundSummary' }).text()).toContain('Required cards')
   })
 
   test('playing all four iterations reaches match end', async () => {
@@ -156,7 +156,7 @@ describe('FlowModePage', () => {
     expect(wrapper.text()).toContain('Upgrade for this use case')
   })
 
-  test('auto pipeline advances over about 30 seconds', async () => {
+  test('auto pipeline advances over about 15 seconds', async () => {
     jest.useFakeTimers()
     const wrapper = mountPage()
     wrapper.vm.onStart({ player1Name: 'Alice', player2IsBot: true, player2Name: 'Bot' })
@@ -169,7 +169,7 @@ describe('FlowModePage', () => {
     expect(wrapper.vm.pipelineStopIndex).toEqual(0)
 
     const halt = wrapper.vm.pipelineMaxHaltIndex
-    jest.advanceTimersByTime(30000)
+    jest.advanceTimersByTime(15000)
     await nextTick()
 
     expect(wrapper.vm.pipelineStopIndex).toEqual(halt)

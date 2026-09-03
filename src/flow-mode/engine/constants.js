@@ -47,5 +47,5 @@ export const DIFFICULTY = {
 }
 
 /** Total wall-clock time for the automatic pipeline animation (ms). */
-export const SIMULATION_DURATION_MS = 30000
+export const SIMULATION_DURATION_MS = 15000
 

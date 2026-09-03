@@ -1,6 +1,11 @@
 import EffectFactory from '@/classes/statusEffect/EffectFactory'
 import FixedPenaltyEffect from '@/classes/statusEffect/FixedPenaltyEffect'
 import { bus } from '@/components/shared/Bus'
+import {
+  markBaseTurnStart,
+  trackBaseAction,
+  trackHazard
+} from '@/analytics/gameAnalytics'
 
 // Some internal constants for different delays during a players turn
 const REDRAW_DELAY = 400
@@ -186,7 +191,9 @@ class Game {
 
     const fact = new EffectFactory(player)
     player.effects.addNegative(fact.newEffect(card.type, 0, false))
-    bus.emit('hazard-applied', { type: card.type, defended: !!defenseMatch, penalty })
+    const hazard = { type: card.type, defended: !!defenseMatch, penalty }
+    bus.emit('hazard-applied', hazard)
+    trackHazard(this, hazard)
     card.discard()
   }
 
@@ -224,6 +231,8 @@ class Game {
    */
   takeTurn (playInfo) {
     if (!this.wait) {
+      trackBaseAction(this, playInfo)
+
       if (this.didNotPlayCard(playInfo.type)) {
         this.cardNotPlayed(playInfo)
       } else {
@@ -344,6 +353,7 @@ class Game {
           this.nextPlayer()
           this._skipBlockedPlayers()
           this.wait = false
+          markBaseTurnStart()
 
           if (this.currentPlayer().isAI) {
             this.takeAITurn()

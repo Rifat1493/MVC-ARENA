@@ -15,13 +15,11 @@
     <p class="use-case-description">
       {{ useCase.description }}
     </p>
-    <p class="use-case-hint">
-      <template v-if="isUpgrade">
-        Read this new scenario first. Next you will upgrade your system by adding 2 cards, then simulate again.
-      </template>
-      <template v-else>
-        Build your MVC system for this scenario. Security risks and required components are revealed after the simulation.
-      </template>
+    <p
+      v-if="isUpgrade"
+      class="use-case-hint"
+    >
+      Read this new scenario first. Next you will upgrade your system by adding 2 cards, then simulate again.
     </p>
 
     <button
@@ -94,7 +92,7 @@ export default {
 }
 
 .use-case-description {
-  margin-bottom: 0.8rem;
+  margin-bottom: 1.2rem;
   color: #ddd;
 }
 

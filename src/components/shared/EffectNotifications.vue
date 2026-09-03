@@ -177,8 +177,9 @@ export default {
      */
     attackBlocked (payload) {
       this.showingCollision = true
-      this.collisionLeft = payload.defenseImage
-      this.collisionRight = payload.attackImage
+      const defenderOnLeft = payload.defenderPlayerId === 0
+      this.collisionLeft = defenderOnLeft ? payload.defenseImage : payload.attackImage
+      this.collisionRight = defenderOnLeft ? payload.attackImage : payload.defenseImage
       this.collisionMessage = payload.message
       setTimeout(() => { this.showingCollision = false }, this.collisionTimeout)
     }

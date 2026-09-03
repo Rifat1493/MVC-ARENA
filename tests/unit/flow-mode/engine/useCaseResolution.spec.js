@@ -13,7 +13,7 @@ function installCards (board, cardIds) {
 describe('useCaseResolution', () => {
   const mobileLogin = useCaseById('mobile-login')
 
-  test('fulfills when every required card is installed', () => {
+  test('fulfills only when every required card is played', () => {
     const board = createPlayerBoard('p1', 'Alice')
     installCards(board, mobileLogin.requiredCardIds)
 
@@ -22,16 +22,15 @@ describe('useCaseResolution', () => {
     expect(result.outcome).toEqual('fulfilled')
     expect(result.fulfilledRequirements).toEqual(mobileLogin.requiredCardIds.length)
     expect(result.missingCardId).toBeNull()
-    expect(result.explanation).toMatch(/Fulfilled/)
+    expect(result.explanation).toMatch(/all 4 required cards/)
   })
 
-  test('fails at the first missing required card and reports the consequence', () => {
+  test('fails when a required card is missing from the played system', () => {
     const board = createPlayerBoard('p1', 'Alice')
     installCards(board, [
+      'controller-routing',
       'controller-authentication',
-      'controller-middleware',
       'model-database'
-      // missing mobile view
     ])
 
     const result = resolveUseCase(board, mobileLogin)
@@ -40,8 +39,22 @@ describe('useCaseResolution', () => {
     expect(result.missingCardId).toEqual('view-mobile-view')
     expect(result.failedAtLayer).toEqual('view')
     expect(result.fulfilledRequirements).toEqual(3)
-    expect(result.explanation).toMatch(/Mobile View/)
-    expect(result.consequence).toEqual(mobileLogin.consequence)
+    expect(result.explanation).toMatch(/required card "Mobile View"/)
+    expect(result.explanation).not.toMatch(/SQL|forge sessions|injection/i)
+  })
+
+  test('product-search missing Routing is a card-match failure, not an SQL message', () => {
+    const productSearch = useCaseById('product-search')
+    const board = createPlayerBoard('p1', 'Alice')
+    installCards(board, ['model-orm', 'model-database', 'view-web-view'])
+
+    const result = resolveUseCase(board, productSearch)
+
+    expect(result.outcome).toEqual('failed')
+    expect(result.missingCardId).toEqual('controller-routing')
+    expect(result.explanation).toEqual(
+      'Not fulfilled: required card "Routing" (Controller) is missing from your system.')
+    expect(result.explanation).not.toMatch(/SQL/i)
   })
 
   test('countFulfilledRequirements counts installed required cards only', () => {

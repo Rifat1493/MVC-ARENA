@@ -37,10 +37,11 @@ describe('NegativeEffectCard', () => {
       }
       const defenseStack = { cards: [defenseCard, { type: 'MODEL' }] }
       const target = fakeTarget({})
+      target.id = 0
       target.getDefenseCardForAttack = jest.fn(() => {
         return { card: defenseCard, stack: defenseStack }
       })
-      const playInfo = { target }
+      const playInfo = { target, player: { id: 1 } }
 
       card.play(playInfo)
 
@@ -51,6 +52,8 @@ describe('NegativeEffectCard', () => {
       expect(playInfo.blockedBy).toBeTruthy()
       expect(playInfo.blockedBy.message).toContain('Orm')
       expect(playInfo.blockedBy.message).toContain('SQL Injection')
+      expect(playInfo.blockedBy.attackerPlayerId).toBe(1)
+      expect(playInfo.blockedBy.defenderPlayerId).toBe(0)
       expect(target.effects.addNegative).not.toBeCalled()
     })
 
