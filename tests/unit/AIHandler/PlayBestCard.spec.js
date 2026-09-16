@@ -100,6 +100,45 @@ describe('PlayBestCard', () => {
 
       expect(result).toBeUndefined()
     })
+
+    test('plays defensive cards via repeat stack logic', () => {
+      const action = new PlayBestCard([...order, 'LOGGER'])
+      const stack = fakeStack(8)
+      const playField = { stacks: [stack] }
+      const player = {
+        hand: { cards: [{ type: 'LOGGER', value: 2 }] },
+        playField,
+        hurtBy: jest.fn(() => false)
+      }
+
+      const result = action.handle(player, players, scores, deck)
+
+      expect(result.type).toEqual('playOnStack')
+      expect(result.card.type).toEqual('LOGGER')
+      expect(result.stack).toEqual(stack)
+    })
+  })
+
+  describe('_playComponent', () => {
+    test('starts a new lane stack when no method stack will accept', () => {
+      const action = new PlayBestCard(order)
+      const method = { willAccept: jest.fn(() => false) }
+      const playField = {
+        lanes: [{ method }, { method }, { method }]
+      }
+      const player = { playField, hurtBy: jest.fn(() => false) }
+      const card = {
+        type: 'MODEL',
+        getLaneIndex: jest.fn(() => 0)
+      }
+
+      const result = action.model(card, { player })
+
+      expect(result.type).toEqual('newStack')
+      expect(result.laneIndex).toEqual(0)
+      expect(result.playField).toEqual(playField)
+      expect(result.card).toEqual(card)
+    })
   })
 
   test('sorting a hand', () => {

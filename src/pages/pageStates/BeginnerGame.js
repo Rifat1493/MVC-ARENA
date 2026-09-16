@@ -2,9 +2,9 @@ import DeckFactory from '@/classes/deck/DeckFactory'
 import Game from '@/pages/pageStates/Game'
 
 const REQUIRED_COMPONENT_COUNTS = {
-  MODEL: 4,
+  MODEL: 3,
   VIEW: 2,
-  CONTROLLER: 5
+  CONTROLLER: 4
 }
 
 const REQUIRED_DEFENSIVE_COUNTS = 2

@@ -1,7 +1,7 @@
 import ActionHandler from '@/classes/AIHandler/ActionHandler'
 import helpers from '@/classes/AIHandler/aiHelpers'
 import cardCatalog from '@/classes/deck/cardCatalog'
-import { isSafety, isNegativeEffect } from '@/classes/card/cardData'
+import { isSafety, isNegativeEffect, isRepeatLike } from '@/classes/card/cardData'
 
 /**
  * Attempts to play cards from an AI players hand based on a given card
@@ -81,6 +81,9 @@ class PlayBestCard extends ActionHandler {
           move = this.playSafety(card, args)
         } else if (isNegativeEffect(card.type)) {
           move = this.playNegativeEffect(card, args)
+        } else if (isRepeatLike(card.type)) {
+          // INTERFACE / GIT / ERROR_HANDLING / LOGGER (and REPEAT) attach to stacks.
+          move = this.repeat(card, args)
         } else if (type in this) {
           move = this[type](card, args)
         }
@@ -508,20 +511,19 @@ class PlayBestCard extends ActionHandler {
   }
 
   /**
-   * Make a playInfo object for a model component card if it can be played.
+   * Plays a component card on a method stack when possible; otherwise starts a
+   * new stack in that component's lane so defensive multipliers have a target.
    *
-   * Will attempt to play the card on any available method stack across all lanes.
-   *
-   * @param {Card} card - The card to attempt to play.
-   * @param {Object} state - An object with the state info needed to make this decision.
-   * @param {Player} state.player - The player making the play.
-   * @return {Object|undefined} A `playOnStack` playInfo object if a play could be made,
-   * `undefined` otherwise.
+   * @param {Card} card - The component card.
+   * @param {Object} state - Turn state.
+   * @param {Player} state.player - The AI player.
+   * @param {int} fallbackLane - Lane index if `getLaneIndex` is unavailable.
+   * @return {Object|undefined} A playInfo object, or undefined if blocked.
+   * @private
    */
-  model (card, { player }) {
+  _playComponent (card, { player }, fallbackLane) {
     if (player.hurtBy('STACK_OVERFLOW')) { return undefined }
 
-    // Try to play on any lane's method stack
     for (const lane of player.playField.lanes) {
       if (lane.method.willAccept(card)) {
         return {
@@ -533,65 +535,64 @@ class PlayBestCard extends ActionHandler {
         }
       }
     }
-    return undefined
+
+    const laneIndex = typeof card.getLaneIndex === 'function'
+      ? card.getLaneIndex()
+      : fallbackLane
+
+    return {
+      type: 'newStack',
+      card: card,
+      cardOwner: player,
+      player: player,
+      playField: player.playField,
+      laneIndex: laneIndex
+    }
+  }
+
+  /**
+   * Make a playInfo object for a model component card if it can be played.
+   *
+   * Prefers an open method stack; otherwise starts a Model-lane stack.
+   *
+   * @param {Card} card - The card to attempt to play.
+   * @param {Object} state - An object with the state info needed to make this decision.
+   * @param {Player} state.player - The player making the play.
+   * @return {Object|undefined} A playInfo object if a play could be made,
+   * `undefined` otherwise.
+   */
+  model (card, args) {
+    return this._playComponent(card, args, 0)
   }
 
   /**
    * Make a playInfo object for a view component card if it can be played.
    *
-   * Will attempt to play the card on any available method stack across all lanes.
+   * Prefers an open method stack; otherwise starts a View-lane stack.
    *
    * @param {Card} card - The card to attempt to play.
    * @param {Object} state - An object with the state info needed to make this decision.
    * @param {Player} state.player - The player making the play.
-   * @return {Object|undefined} A `playOnStack` playInfo object if a play could be made,
+   * @return {Object|undefined} A playInfo object if a play could be made,
    * `undefined` otherwise.
    */
-  view (card, { player }) {
-    if (player.hurtBy('STACK_OVERFLOW')) { return undefined }
-
-    // Try to play on any lane's method stack
-    for (const lane of player.playField.lanes) {
-      if (lane.method.willAccept(card)) {
-        return {
-          type: 'playOnStack',
-          card: card,
-          cardOwner: player,
-          player: player,
-          stack: lane.method,
-        }
-      }
-    }
-    return undefined
+  view (card, args) {
+    return this._playComponent(card, args, 1)
   }
 
   /**
    * Make a playInfo object for a controller component card if it can be played.
    *
-   * Will attempt to play the card on any available method stack across all lanes.
+   * Prefers an open method stack; otherwise starts a Controller-lane stack.
    *
    * @param {Card} card - The card to attempt to play.
    * @param {Object} state - An object with the state info needed to make this decision.
    * @param {Player} state.player - The player making the play.
-   * @return {Object|undefined} A `playOnStack` playInfo object if a play could be made,
+   * @return {Object|undefined} A playInfo object if a play could be made,
    * `undefined` otherwise.
    */
-  controller (card, { player }) {
-    if (player.hurtBy('STACK_OVERFLOW')) { return undefined }
-
-    // Try to play on any lane's method stack
-    for (const lane of player.playField.lanes) {
-      if (lane.method.willAccept(card)) {
-        return {
-          type: 'playOnStack',
-          card: card,
-          cardOwner: player,
-          player: player,
-          stack: lane.method,
-        }
-      }
-    }
-    return undefined
+  controller (card, args) {
+    return this._playComponent(card, args, 2)
   }
 }
 

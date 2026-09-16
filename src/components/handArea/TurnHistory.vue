@@ -12,7 +12,7 @@
           <span class="requirement-label">M</span>
           <span class="requirement-boxes">
             <span
-              v-for="index in 4"
+              v-for="index in 3"
               :key="`model-${entry.player.id}-${index}`"
               :class="['requirement-box', { filled: index <= entry.model }]"
             />
@@ -34,7 +34,7 @@
           <span class="requirement-label">C</span>
           <span class="requirement-boxes">
             <span
-              v-for="index in 5"
+              v-for="index in 4"
               :key="`controller-${entry.player.id}-${index}`"
               :class="['requirement-box', { filled: index <= entry.controller }]"
             />

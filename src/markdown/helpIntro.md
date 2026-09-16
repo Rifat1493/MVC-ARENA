@@ -6,7 +6,7 @@
 
 
 
-## INTRODUCTION
+
 MVC-ARENA is a fun, educational card game about building a secure software system.
 You race your opponent to build a complete **MVC (Model–View–Controller)** program
 while defending it from security threats.
