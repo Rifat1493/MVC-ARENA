@@ -1,8 +1,9 @@
 /**
- * Durable Supabase sink for playtest telemetry.
+ * Durable Supabase sink for Base Mode playtest telemetry.
  *
  * Events are buffered in memory + localStorage, then flushed via the
- * `log_game_events` RPC (see supabase/setup.sql).
+ * `log_base_game_events` RPC (see supabase/setup.sql). Rows are fully
+ * columnar — no jsonb properties payload.
  *
  * @module analytics/supabaseLogger
  */
@@ -10,22 +11,21 @@
 import { v4 as uuidV4 } from 'uuid'
 import { isPlaytest } from '@/analytics/playtest'
 
-const BUFFER_KEY = 'mvcarena.telemetry.buffer'
+const BUFFER_KEY = 'mvcarena.telemetry.buffer.v2'
 const CLIENT_ID_KEY = 'mvcarena.telemetry.clientId'
-const RPC = 'log_game_events'
+const RPC = 'log_base_game_events'
 
 /**
- * Normalizes the project URL from env.
- * @param {string} url - Raw env value.
- * @return {string} Project root without trailing slash.
+ * @param {string} url
+ * @return {string}
  */
 function normalizeProjectUrl (url) {
   return url.trim().replace(/\/+$/, '').replace(/\/rest\/v1$/i, '')
 }
 
 /**
- * @param {string} url - Raw env value.
- * @return {string} Full RPC URL.
+ * @param {string} url
+ * @return {string}
  */
 function buildEndpoint (url) {
   return `${normalizeProjectUrl(url)}/rest/v1/rpc/${RPC}`
@@ -121,7 +121,7 @@ function buildHeaders () {
 }
 
 /**
- * @param {Object[]} rows - Rows to insert.
+ * @param {Object[]} rows
  * @param {bool} [keepalive=false]
  * @return {Promise<bool>}
  */
@@ -259,19 +259,19 @@ export function getClientId () {
 }
 
 /**
- * Queues one event row matching supabase/setup.sql.
+ * Queues one columnar Base event row.
  * @param {string} event - Event name.
- * @param {Object} [properties] - Event properties (stored in jsonb).
+ * @param {Object} [fields] - Flat column values (see supabase/setup.sql).
  */
-export function logSupabaseEvent (event, properties = {}) {
+export function logSupabaseEvent (event, fields = {}) {
   if (!enabled) {
     return
   }
 
-  const rest = { ...properties }
-  const sessionId = rest.game_session_id || null
-  delete rest.game_session_id
-  delete rest.is_playtest
+  const sessionId = fields.game_session_id || null
+  const columns = { ...fields }
+  delete columns.game_session_id
+  delete columns.is_playtest
 
   buffer.push({
     event_id: uuidV4(),
@@ -280,7 +280,8 @@ export function logSupabaseEvent (event, properties = {}) {
     event,
     is_playtest: isPlaytest(),
     client_time: new Date().toISOString(),
-    properties: rest
+    app_version: import.meta.env.VITE_APP_VERSION || 'dev',
+    ...columns
   })
 
   if (buffer.length > MAX_BUFFERED_EVENTS) {

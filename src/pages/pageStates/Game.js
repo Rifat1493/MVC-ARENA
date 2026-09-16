@@ -193,7 +193,7 @@ class Game {
     player.effects.addNegative(fact.newEffect(card.type, 0, false))
     const hazard = { type: card.type, defended: !!defenseMatch, penalty }
     bus.emit('hazard-applied', hazard)
-    trackHazard(this, hazard)
+    trackHazard(this, player, hazard)
     card.discard()
   }
 
@@ -231,13 +231,14 @@ class Game {
    */
   takeTurn (playInfo) {
     if (!this.wait) {
-      trackBaseAction(this, playInfo)
-
       if (this.didNotPlayCard(playInfo.type)) {
         this.cardNotPlayed(playInfo)
       } else {
         this.playCard(playInfo)
       }
+
+      // Log after resolve so attack `blockedBy` / defended is available.
+      trackBaseAction(this, playInfo)
 
       this.turnHistory.push(playInfo)
       this.update()

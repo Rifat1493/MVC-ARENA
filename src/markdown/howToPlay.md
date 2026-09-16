@@ -11,6 +11,31 @@ Components are the building blocks of your program. Each is worth **1 point** an
 belongs to one lane: Model, View, or Controller. Play a component into its lane to
 start a stack, or onto the lane's **inheritance stack** to add points.
 
+### Model
+
+![Caching](static/cardImages/model/caching.png)
+![Data Validation](static/cardImages/model/data_validation.png)
+![Database](static/cardImages/model/database.png)
+![File Storage Adapter](static/cardImages/model/file_storage_adapter.png)
+![ORM](static/cardImages/model/orm.png)
+![Secrets Manager](static/cardImages/model/secrets_manager.png)
+
+### View
+
+![Web View](static/cardImages/view/web_view.png)
+![Mobile View](static/cardImages/view/mobile_view.png)
+![CLI View](static/cardImages/view/cli_view.png)
+![Output Validation](static/cardImages/view/output_validation.png)
+
+### Controller
+
+![Authentication](static/cardImages/controller/authentication.png)
+![Authorization](static/cardImages/controller/authorization.png)
+![Routing](static/cardImages/controller/Routing.png)
+![Middleware](static/cardImages/controller/Middleware.png)
+![Rate Limiting](static/cardImages/controller/rate_limiting.png)
+![CSRF Protection](static/cardImages/controller/csrf_protection.png)
+
 | **Lane** | **Components** |
 | -------- | -------------- |
 | **Model** | Caching, Data Validation, Database, File Storage Adapter, ORM, Secrets Manager |
@@ -31,7 +56,6 @@ business logic, the **View** shows the interface to the user, and the
 
 ![Inheritance card](static/cardImages/method.png)
 
-
 The Inheritance card starts a stack in a lane. Component cards placed on an
 inheritance stack add up to a maximum of **9 points** (up to **6 cards**).
 
@@ -45,6 +69,11 @@ of another class, a core idea in object-oriented programming.
 Defensive cards **double** the points of the stack you play them on:
 **Interface**, **Error Handling**, **Git**, and **Logger**.
 
+![Interface](static/cardImages/defensive/interface.png)
+![Error Handling](static/cardImages/defensive/error_handling.png)
+![Git](static/cardImages/defensive/Git.png)
+![Logger](static/cardImages/defensive/logger.png)
+
 Some also protect you from events: **Git** protects against Disaster (and helps
 against Ransomware) and **Logger** protects against Bugs.
 
@@ -55,6 +84,8 @@ so problems can be found and fixed.
 
 
 ## Polymorphism (wildcard component)
+
+![Polymorphism](static/cardImages/defensive/polymorphism.png)
 
 When you drop a Polymorphism card into a lane, a picker opens and you choose **any
 component of that lane** for it to become. It then counts as that component.
@@ -69,6 +100,14 @@ the same code can work with different types.
 Attack cards reduce a target player's points. If the target holds the matching
 **defending component**, the attack is **blocked** (an encounter animation plays)
 and the defending card is used up instead of the player losing points.
+
+![DoS](static/cardImages/attack/dos.png)
+![SQL Injection](static/cardImages/attack/sql_injection.png)
+![XSS](static/cardImages/attack/xss.png)
+![CSRF](static/cardImages/attack/csrf.png)
+![Malware](static/cardImages/attack/malware.png)
+![Unauthorized Access](static/cardImages/attack/unauthorized_access.png)
+![Ransomware](static/cardImages/attack/ransom.png)
 
 | **Attack** | **Defended by** |
 | ---------- | --------------- |
@@ -92,7 +131,6 @@ more at <a href="https://owasp.org/" target="_blank">OWASP</a>.
 ![Bug](static/cardImages/destructive/bug.png)
 ![Disaster](static/cardImages/destructive/disaster.png)
 
-
 Destructive events take effect **immediately** when drawn; they are not placed on
 the board. If you have no protecting card, you lose **half of your points** and your
 next turn is restricted.
@@ -106,37 +144,3 @@ next turn is restricted.
 **Relation to software:** A **Bug** is a defect in the code (a Logger helps you find
 and fix it), and a **Disaster** is a catastrophic failure or data loss (Git backups
 let you recover).
-
-
-
-# Flow Mode
-
-Flow Mode is a competitive system-building challenge (Player 1 vs Player 2 or Bot).
-You improve an MVC architecture across **4 iterations**, each driven by a software
-**use case** that also teaches a security risk (SQL injection, XSS, session theft,
-CSRF, unauthorized access, and more).
-
-## Match flow
-
-1. **Reveal use case** — Read the scenario only (security risk and required cards stay hidden).
-2. **Select cards** (only after reading the use case)
-   - Iteration 1: choose exactly **2 Controller**, **2 Model**, and **1 View**.
-   - Iterations 2–4: read the **new use case first**, then add exactly **2 new cards**.
-3. **Review** — Selected cards are placed automatically into their Controller /
-   Model / View layers.
-4. **Simulate** — Watch an automatic ~15 second request/response animation. The use
-   case is **fulfilled** only if every **required card** is present in your system;
-   otherwise it stops at the first missing card. Afterward you see the required-card
-   match result, plus a short security lesson about why those cards matter.
-5. Repeat for four different use cases, then compare scores.
-
-## Scoring
-
-- **+1** for each fulfilled use case.
-- If tied, the player who covered more **required cards** across the match wins.
-- If still tied, the match is a draw.
-
-The same 16 MVC component cards from Base Mode are used here (Routing, ORM,
-Authentication, Mobile View, Output Validation, and the rest). Guards such as
-ORM, Authentication, and Output Validation are often required to stop the use
-case’s threat.

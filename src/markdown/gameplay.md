@@ -1,9 +1,18 @@
-## Overview
+# Gameplay
 
-MVC-ARENA is a two-player game. You can play against another person or against the
-computer. The goal is to build a complete and secure **MVC architecture** before
-your opponent does.
+MVC-ARENA has two modes. **Base Mode** is the turn-based lane-building duel.
+**Flow Mode** is a use-case iteration challenge. Both use the same MVC component
+cards.
 
+
+
+## Base Mode
+
+### Overview
+
+MVC-ARENA Base Mode is a two-player game. You can play against another person or
+against the computer. The goal is to build a complete and secure **MVC
+architecture** before your opponent does.
 
 - After starting, two players are added: **two human players**, or **one human
 player and a computer opponent**.
@@ -12,7 +21,7 @@ player and a computer opponent**.
 
 
 
-#### Quick Guide
+### Quick Guide
 
 When the game starts, each player has **five cards**. At the end of every turn you
 draw one new card. On your turn you can:
@@ -44,15 +53,15 @@ Disasters.
 
 
 
-#### How to win
+### How to win
 
 To win, a player must collect the required components **and** reach the score limit:
 
 | **Requirement** | **Needed** |
 | --------------- | ---------- |
-| Model components | 4 |
+| Model components | 3 |
 | View components | 2 |
-| Controller components | 5 |
+| Controller components | 4 |
 | Defensive cards | 2 |
 | Score | 25 |
 |||
@@ -60,3 +69,37 @@ To win, a player must collect the required components **and** reach the score li
 The **requirement tracker** on screen shows your progress. Each group fills as you
 collect cards, and your status changes from **Pending** to **Done** when all the
 card requirements are met.
+
+
+
+## Flow Mode
+
+Flow Mode is a competitive system-building challenge (Player 1 vs Player 2 or Bot).
+You improve an MVC architecture across **4 iterations**, each driven by a software
+**use case** that also teaches a security risk (SQL injection, XSS, session theft,
+CSRF, unauthorized access, and more).
+
+### Match flow
+
+1. **Reveal use case** — Read the scenario only (security risk and required cards stay hidden).
+2. **Select cards** (only after reading the use case)
+   - Iteration 1: choose exactly **2 Controller**, **2 Model**, and **1 View**.
+   - Iterations 2–4: read the **new use case first**, then add exactly **2 new cards**.
+3. **Review** — Selected cards are placed automatically into their Controller /
+   Model / View layers.
+4. **Simulate** — Watch an automatic ~15 second request/response animation. The use
+   case is **fulfilled** only if every **required card** is present in your system;
+   otherwise it stops at the first missing card. Afterward you see the required-card
+   match result, plus a short security lesson about why those cards matter.
+5. Repeat for four different use cases, then compare scores.
+
+### Scoring
+
+- **+1** for each fulfilled use case.
+- If tied, the player who covered more **required cards** across the match wins.
+- If still tied, the match is a draw.
+
+The same 16 MVC component cards from Base Mode are used here (Routing, ORM,
+Authentication, Mobile View, Output Validation, and the rest). Guards such as
+ORM, Authentication, and Output Validation are often required to stop the use
+case’s threat.
