@@ -85,20 +85,43 @@ class Home {
   }
 
   /**
+   * Clears the lobby and sets up a single human vs one beginner bot.
+   * @param {string} name - The human player's name.
+   * @return {bool} True if setup succeeded.
+   */
+  setupSoloVsBot (name) {
+    const trimmed = String(name || '').trim()
+    this.message = ''
+    this.players = []
+
+    if (!trimmed) {
+      this.message = 'Please enter a name'
+      return false
+    }
+    if (trimmed.toLowerCase() === 'n00b_b0t') {
+      this.message = 'That name is reserved for the bot'
+      return false
+    }
+
+    this.addPlayer(trimmed)
+    this.addBot()
+    return this.canStart()
+  }
+
+  /**
    * Checks if the game is able to start.
    *
-   * If the game is not ready then it will set the message to indicate why.
-   * I.e there are not enough players, or no human players.
+   * Solo vs bot requires exactly one human and one bot.
    *
    * @return {bool} True if the game can start.
    */
   canStart () {
     let result = true
-    if (!this.hasEnoughPlayers()) {
-      this.message = "You don't have the right number of players"
+    if (!this.hasHuman()) {
+      this.message = 'Please enter a name'
       result = false
-    } else if (!this.hasHuman()) {
-      this.message = "You must add at least 1 human player"
+    } else if (!this.hasBot() || !this.hasEnoughPlayers()) {
+      this.message = 'Could not start a game against the bot'
       result = false
     }
     return result
