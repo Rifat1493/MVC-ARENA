@@ -10,7 +10,26 @@
       id="game-setup"
       class="centered"
     >
-      <add-players />
+      <div id="player-setup">
+        <h4 class="sub-heading">
+          Your name
+        </h4>
+        <input
+          id="enter-name"
+          v-model="playerName"
+          type="text"
+          maxlength="10"
+          placeholder="Enter your name..."
+          autofocus
+          @keyup.enter="playBase()"
+        >
+        <p
+          id="vs-bot"
+          class="hint"
+        >
+          You will play against a bot
+        </p>
+      </div>
 
       <div
         id="playtest-code"
@@ -46,10 +65,10 @@
         <button
           id="go"
           class="btn btn-success"
-          :disabled="!home.canStart()"
+          :disabled="!canPlay"
           @click="playBase()"
         >
-          Play Base
+          Play vs Bot
         </button>
       </div>
     </div>
@@ -58,21 +77,20 @@
 
 <script>
 import PageHeader from '@/components/shared/PageHeader'
-import AddPlayers from '@/components/setup/AddPlayers'
 import { setPlaytestCode, PLAYTEST_CODE } from '@/analytics/playtest'
 import { mapActions, mapGetters } from 'vuex'
 
 /**
- * The main landing page component for Program Wars where players set up and start games.
+ * Landing page: enter a name and start a Base Mode game against a bot.
  */
 export default {
   name: 'HomePage',
   components: {
-    'page-header': PageHeader,
-    'add-players': AddPlayers
+    'page-header': PageHeader
   },
   data () {
     return {
+      playerName: '',
       playtestCode: ''
     }
   },
@@ -80,6 +98,9 @@ export default {
     ...mapGetters(['home']),
     playtestArmed () {
       return String(this.playtestCode || '').trim().toUpperCase() === PLAYTEST_CODE
+    },
+    canPlay () {
+      return String(this.playerName || '').trim().length > 0
     }
   },
   methods: {
@@ -87,14 +108,17 @@ export default {
       'startBeginnerGame'
     ]),
     /**
-     * Starts a Base Mode game using the players set up on this page.
+     * Starts a Base Mode game: one human vs one beginner bot.
      */
     playBase () {
       setPlaytestCode(this.playtestCode)
-      if (this.home.canStart()) {
-        this.startBeginnerGame({
-          players: this.home.createPlayers(), level: this.home.level })
+      if (!this.home.setupSoloVsBot(this.playerName)) {
+        return
       }
+      this.startBeginnerGame({
+        players: this.home.createPlayers(),
+        level: this.home.level
+      })
     }
   }
 }
@@ -117,6 +141,32 @@ export default {
   min-height: 30rem;
   background-color: white;
   border-radius: 2rem;
+}
+
+#player-setup {
+  margin: 2rem 1rem 0;
+  text-align: center;
+}
+
+.sub-heading {
+  color: black;
+  text-decoration: underline;
+  text-decoration-skip-ink: none;
+}
+
+#enter-name {
+  border: none;
+  border-bottom: 0.1vh solid black;
+  outline: none;
+  text-align: center;
+  font-size: 1.1rem;
+  min-width: 14rem;
+}
+
+.hint {
+  margin-top: 0.75rem;
+  color: #555;
+  font-size: 0.95rem;
 }
 
 #playtest-code {
@@ -166,4 +216,3 @@ export default {
   margin-right: auto;
 }
 </style>
-
