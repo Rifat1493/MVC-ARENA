@@ -68,7 +68,7 @@
           :disabled="!canPlay"
           @click="playBase()"
         >
-          Play vs Bot
+          Play
         </button>
       </div>
     </div>

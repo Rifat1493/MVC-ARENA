@@ -48,6 +48,7 @@
 import CardStack from '@/components/stackArea/CardStack'
 import PlayFieldInfo from '@/components/info/PlayFieldInfo'
 import { isBase } from '@/classes/card/cardData'
+import { isComponentType, wrongLaneMessage } from '@/classes/card/laneRules'
 import { bus } from '@/components/shared/Bus'
 import { mapGetters } from 'vuex'
 
@@ -116,6 +117,14 @@ export default {
           laneIndex,
           laneType: LANE_TYPES[laneIndex]
         })
+        return
+      }
+
+      if (isComponentType(card.type) &&
+          typeof card.getLaneIndex === 'function' &&
+          card.getLaneIndex() !== laneIndex) {
+        event.stopPropagation()
+        bus.emit('invalid-play', { message: wrongLaneMessage() })
         return
       }
 
