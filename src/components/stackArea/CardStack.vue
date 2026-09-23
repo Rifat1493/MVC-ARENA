@@ -33,6 +33,7 @@
 import { bus } from '@/components/shared/Bus'
 import { mapGetters } from 'vuex'
 import { describeCard } from '@/classes/card/cardDescriptions'
+import { isComponentType, wrongInheritanceMessage } from '@/classes/card/laneRules'
 
 // Lane index -> component type a Polymorphism card can morph into.
 const LANE_TYPES = ['MODEL', 'VIEW', 'CONTROLLER']
@@ -200,6 +201,13 @@ export default {
         })
       } else if (this.stack.isMethod) {
         event.stopPropagation();
+        if (this.ownedByCurrentPlayer && isComponentType(card.type) &&
+            typeof this.stack.getAcceptedComponentType === 'function' &&
+            card.type !== this.stack.getAcceptedComponentType()) {
+          bus.emit('invalid-play', {
+            message: wrongInheritanceMessage()
+          })
+        }
       }
     },
     // Forces the component to redraw itself. Update is the :key for the whole

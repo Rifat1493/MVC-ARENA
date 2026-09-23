@@ -32,6 +32,12 @@
       >
     </div>
   </div>
+  <div
+    v-if="showingInvalid"
+    id="invalid-play-notification"
+  >
+    {{ invalidMessage }}
+  </div>
 </template>
 
 
@@ -70,7 +76,10 @@ export default {
       collisionLeft: '',
       collisionRight: '',
       collisionMessage: '',
-      collisionTimeout: 7200 // on screen hold
+      collisionTimeout: 7200, // on screen hold
+      showingInvalid: false,
+      invalidMessage: '',
+      invalidTimeout: 2800
     }
   },
   computed: {
@@ -82,6 +91,7 @@ export default {
     bus.on('scan-used', this.scanUsed)
     bus.on('attack-blocked', this.attackBlocked)
     bus.on('hazard-applied', this.hazardApplied)
+    bus.on('invalid-play', this.invalidPlay)
   },
   beforeUnmount () {
     // Remove listeners for the events before the module is destroyed
@@ -89,6 +99,7 @@ export default {
     bus.off('scan-used', this.scanUsed)
     bus.off('attack-blocked', this.attackBlocked)
     bus.off('hazard-applied', this.hazardApplied)
+    bus.off('invalid-play', this.invalidPlay)
   },
   methods: {
     /**
@@ -182,6 +193,16 @@ export default {
       this.collisionRight = defenderOnLeft ? payload.attackImage : payload.defenseImage
       this.collisionMessage = payload.message
       setTimeout(() => { this.showingCollision = false }, this.collisionTimeout)
+    },
+    /**
+     * Shows a short error when a card is dropped in the wrong lane / stack.
+     * @param {Object} payload - `{ message }`.
+     */
+    invalidPlay (payload) {
+      this.invalidMessage = (payload && payload.message) ||
+        'Play the card in the designated lane'
+      this.showingInvalid = true
+      setTimeout(() => { this.showingInvalid = false }, this.invalidTimeout)
     }
   }
 }
@@ -219,6 +240,27 @@ export default {
   text-shadow: 0 0 1rem rgba(0, 0, 0, 0.8);
   letter-spacing: 0.02rem;
   animation: hazard-pop 0.6s ease-out;
+  pointer-events: none;
+}
+
+#invalid-play-notification {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 125;
+  max-width: 28rem;
+  padding: 0.85rem 1.4rem;
+  border-radius: 0.75rem;
+  background: rgba(20, 20, 20, 0.94);
+  border: 2px solid #f0c040;
+  box-shadow: 0 0 1.2rem rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 650;
+  line-height: 1.35;
+  text-align: center;
+  animation: hazard-pop 0.45s ease-out;
   pointer-events: none;
 }
 

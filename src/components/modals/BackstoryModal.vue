@@ -10,29 +10,16 @@
       data-keyboard="false"
     >
       <div class="modal-content my-content">
-        <div
-          class="modal-header"
-          style="border: none"
-        > 
-          <h2
-            class="modal-title"
-            style="border-radius: 1rem;"
-          >
-            In the not too distant future...
-          </h2>
-        </div>
-
         <div class="modal-body">
-          <p style="font-size: 1.3rem; text-align: left;">
-            MVC-ARENA drops players into a futuristic world where coding is the ultimate weapon. 
-            In a time when machines dominate through superior programming, humans must rely on strategy, logic, and 
-            efficient design patterns to compete and survive.
-            <br>
-            <br>
-          As part of the resistance, players use MVC principles to outmaneuver opponents, optimize their decisions, and 
-          reclaim control one challenge at a time. Every move is a balance between attack, defense, and smart resource management—turning 
-          coding knowledge into a competitive advantage in the fight to restore human freedom.
-          </p>
+          <div class="video-wrap">
+            <iframe
+              src="https://www.youtube.com/embed/JmkWBqwVZxA"
+              title="MVC-ARENA gameplay"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+            />
+          </div>
         </div>
 
         <div
@@ -54,7 +41,7 @@
 
 <script>
 /**
- * Modal for displaying the games backstory.
+ * Modal for displaying the game intro video.
  */
 export default {
   name: 'BackstoryModal'
@@ -73,8 +60,21 @@ export default {
   border-radius: 2em;
 }
 
-h2 {
-  padding: 0;
-  margin: 0;
+.video-wrap {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  border-radius: 0.75rem;
+}
+
+.video-wrap iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 </style>
