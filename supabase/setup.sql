@@ -23,6 +23,7 @@ create table public.base_game_events (
   session_id             uuid,
   event                  text        not null,
   is_playtest            boolean     not null default false,
+  study_id               text,
   client_time            timestamptz not null,
   received_at            timestamptz not null default now(),
   app_version            text,
@@ -52,6 +53,8 @@ create index base_game_events_session_idx  on public.base_game_events (session_i
 create index base_game_events_client_idx   on public.base_game_events (client_id);
 create index base_game_events_playtest_idx on public.base_game_events (is_playtest)
   where is_playtest;
+create index base_game_events_study_id_idx on public.base_game_events (study_id)
+  where study_id is not null;
 create index base_game_events_event_idx    on public.base_game_events (event);
 create index base_game_events_received_idx on public.base_game_events (received_at desc);
 
@@ -82,7 +85,7 @@ begin
   end if;
 
   insert into public.base_game_events (
-    event_id, client_id, session_id, event, is_playtest, client_time, app_version,
+    event_id, client_id, session_id, event, is_playtest, study_id, client_time, app_version,
     turn_number, player_id, player_name, is_bot,
     action_type, card_type, component_name, target_player_id, defended,
     decision_duration_ms, score_p0, score_p1,
@@ -94,6 +97,7 @@ begin
     nullif(e ->> 'session_id', '')::uuid,
     e ->> 'event',
     coalesce((e ->> 'is_playtest')::boolean, false),
+    nullif(e ->> 'study_id', ''),
     (e ->> 'client_time')::timestamptz,
     e ->> 'app_version',
     nullif(e ->> 'turn_number', '')::integer,
