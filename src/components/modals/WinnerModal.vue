@@ -136,17 +136,6 @@
           Play Again
         </button>
       </div>
-
-      <div class="modal-footer">
-        <p>
-          <b>If you are comfortable with the concept & ready to participate in the post-game survey go-to: </b>
-
-          <a
-            href="https://uleth.ca1.qualtrics.com/jfe/preview/SV_56jDOuF8Tor2VrU?Q_CHL=preview&Q_SurveyVersionID=current"
-            target="_blank"
-          >Post Game Survey</a>
-        </p>
-      </div>
     </div>
   </div>
 </template>

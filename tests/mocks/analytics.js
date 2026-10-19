@@ -11,6 +11,8 @@ export function capture () {}
 
 export const PLAYTEST_CODE = 'T1K5M9'
 export function setPlaytestCode () { return false }
+export function setStudyId () { return '' }
+export function getStudyId () { return '' }
 export function isPlaytest () { return false }
 export function clearPlaytest () {}
 

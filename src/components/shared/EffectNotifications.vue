@@ -131,26 +131,36 @@ export default {
     },
     /**
      * Builds a message explaining the consequence of a hazard card.
+     * Uses "you" for the human player and "the bot" when the AI is hit.
      * @param {string} type - The hazard type ('BUG' or 'DISASTER').
-     * @param {Object} payload - The hazard payload (defended flag, penalty).
+     * @param {Object} payload - The hazard payload (defended, penalty, isBot).
      * @return {string} The message to display.
      */
     _hazardMessage (type, payload) {
       const defended = payload && payload.defended
       const points = payload && payload.penalty ? Math.abs(payload.penalty) : 0
+      const isBot = payload && payload.isBot
+      const whose = isBot ? "the bot's" : 'your'
+      const whoObj = isBot ? 'the bot' : 'you'
+      const nextTurns = isBot ? "the bot's next turns" : 'your next turns'
+
       if (type === 'BUG') {
         if (defended) {
-          return 'BUG BLOCKED! Your Logger card caught the defect and protected your score.'
+          return `BUG BLOCKED! ${isBot ? "The bot's" : 'Your'} Logger card caught the defect and protected ${whose} score.`
         }
-        const lost = points > 0 ? `cost you ${points} points (half your score) and ` : ''
-        return `BUG! A code defect ${lost}disrupts your next turns. Tip: a Logger card defends against Bugs.`
+        const lost = points > 0
+          ? `cost ${whoObj} ${points} points (half ${whose} score) and `
+          : ''
+        return `BUG! A code defect ${lost}disrupts ${nextTurns}. Tip: a Logger card defends against Bugs.`
       }
       if (type === 'DISASTER') {
         if (defended) {
-          return 'DISASTER AVERTED! Your Git backup restored your work and protected your score.'
+          return `DISASTER AVERTED! ${isBot ? "The bot's" : 'Your'} Git backup restored ${isBot ? 'its' : 'your'} work and protected ${whose} score.`
         }
-        const lost = points > 0 ? `wiped out ${points} points (half your score) and ` : ''
-        return `DISASTER! It ${lost}disrupts your next turns. Tip: a Git card defends against Disasters.`
+        const lost = points > 0
+          ? `wiped out ${points} points (half ${whose} score) and `
+          : ''
+        return `DISASTER! It ${lost}disrupts ${nextTurns}. Tip: a Git card defends against Disasters.`
       }
       return `${type} happened`
     },

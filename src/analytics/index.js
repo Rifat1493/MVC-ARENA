@@ -16,6 +16,8 @@ export { capture } from '@/analytics/capture'
 export {
   PLAYTEST_CODE,
   setPlaytestCode,
+  setStudyId,
+  getStudyId,
   isPlaytest,
   clearPlaytest
 } from '@/analytics/playtest'

@@ -9,7 +9,7 @@
  */
 
 import { v4 as uuidV4 } from 'uuid'
-import { isPlaytest } from '@/analytics/playtest'
+import { isPlaytest, getStudyId } from '@/analytics/playtest'
 
 const BUFFER_KEY = 'mvcarena.telemetry.buffer.v2'
 const CLIENT_ID_KEY = 'mvcarena.telemetry.clientId'
@@ -279,6 +279,7 @@ export function logSupabaseEvent (event, fields = {}) {
     session_id: sessionId,
     event,
     is_playtest: isPlaytest(),
+    study_id: isPlaytest() ? (getStudyId() || null) : null,
     client_time: new Date().toISOString(),
     app_version: import.meta.env.VITE_APP_VERSION || 'dev',
     ...columns

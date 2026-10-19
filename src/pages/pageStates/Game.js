@@ -191,7 +191,13 @@ class Game {
 
     const fact = new EffectFactory(player)
     player.effects.addNegative(fact.newEffect(card.type, 0, false))
-    const hazard = { type: card.type, defended: !!defenseMatch, penalty }
+    const hazard = {
+      type: card.type,
+      defended: !!defenseMatch,
+      penalty,
+      isBot: !!player.isAI,
+      playerName: player.name || null
+    }
     bus.emit('hazard-applied', hazard)
     trackHazard(this, player, hazard)
     card.discard()

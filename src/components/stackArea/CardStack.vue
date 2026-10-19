@@ -133,32 +133,12 @@ export default {
       return false
     },
     /**
-     * Checks whether or not given card in the stack will accept the current
-     * selected card. This is used for higlighting a card in the stack when
-     * the current card can be played on the stack. As it is for the stack,
-     * only the top card is considered for highlighting.
-     * @return {bool} True if the card will accept the current card.
+     * Stack target highlighting on card select is disabled (no lane/stack glow).
+     * Drop validation still uses canPlayOnStack.
+     * @return {string} Always '' so stacks are not highlighted.
      */
-    cardWillAcceptCurrent (card) {
-      return this.game.currentCard && !this.game.currentPlayer.isAI && !this.game.wait
-          && card === this.stack.getTop() && this.canPlayOnStack(this.game.currentCard)
-    },
-    /**
-     * Decide what shadow CSS class the given card should have. This is based on the
-     * type and position in the stack as well as the currently selected card type.
-     * @param {Card} card - The card in the stack to check
-     * @return {string} The CSS class to give the card. 'attack', 'play' or ''.
-     */
-    shadow (card) {
-      if (this.cardWillAcceptCurrent(card)) {
-        if (this.game.currentCard.type === 'VIRUS') {
-          return this.willAcceptVirus ? 'attack' : ''
-        } else {
-          return this.ownedByCurrentPlayer ? 'play' : ''
-        }
-      } else {
-        return ''
-      }
+    shadow () {
+      return ''
     },
     /**
      * Handles the event where a card is dropped on the stack.
